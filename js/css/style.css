@@ -1,0 +1,147 @@
+
+body {
+	background-color: #fff3e0; 
+	padding-top: 10vh;
+}
+
+a:link{
+	color:#212121 ;
+}
+a:visited{
+	color:#212121 ;
+}
+.av{
+	max-height:30vh; 
+	max-width:40vh;
+	border-radius: 50%;
+	margin-left: 4vh;
+    box-shadow:
+    -0.2vh -0.2vh 0 #212121,
+    0.2vh -0.2vh 0 #212121,
+    -0.2vh 0.2vh 0 #212121,
+    0.2vh 0.2vh 0 #212121;
+
+}
+.icon{
+	max-height:7vh; 
+	max-width:7vh;
+	border-radius: 0%;
+	margin-left: 4vh;
+	margin-top: 2vh;
+}
+.about{
+	font-size: 1.2em;
+
+}
+.list{
+	font-size: 1.2em;
+	font-color:#212121 ;
+}
+.name{
+	text-align: center;
+	font-size: 3em;
+	color: #212121;
+	margin-top: 3vh;
+	position: relative;
+	/*-webkit-text-stroke: 0.vh #212121;*/
+}
+
+.h1{
+	border-bottom: 0.3vh solid #212121; 
+	padding-bottom: 0.4vh;
+}
+
+.left{
+	margin-left: 5vh;
+	padding-left: 10vh;
+	font-family: Roboto,sans-serif;
+	margin-right: 66vh;
+	position: absolute;
+}
+
+.right{
+	border-left: 1vh solid #212121;
+	margin-left: 66vh;
+	padding-left: 10vh;
+	font-family: Roboto,sans-serif;
+	margin-right: 20vh;
+}
+
+.bigCircle{
+	width: 7vh;
+	height: 7vh;
+	border-radius:50%;
+	background-color: #c5e1a5;
+	margin-left: -14.05vh;
+	padding-left: 0vh;
+	position: absolute;
+	z-index: 2;
+
+	border: 0.8vh solid #212121;
+	}
+
+.bigRect{
+	width: 7vh;
+	height: 8.5vh;
+	background-color:  #fff3e0;
+	margin-left: -14.05vh;
+	margin-bottom:-0.75vh;
+	position: absolute;
+	z-index: 0;
+	}
+
+.smallCircle{
+	width: 5vh;
+	height: 5vh;
+	border-radius:50%;
+	background-color: #80cbc4;
+	margin-left: -12.99vh;
+	padding-left: 0vh;
+	position: absolute;
+	z-index: 2;
+
+	border: 0.8vh solid #212121;
+	}
+
+.smallRect{
+	width: 6.5vh;
+	height: 6.5vh;
+	background-color:  #fff3e0;
+	margin-left: -14.05vh;
+	margin-bottom: -0.8vh;
+	position: absolute;
+	z-index: 0;
+	}
+
+.s1{
+	bottom: 48.2vh;
+}
+.s2{
+	bottom: 6.7vh;
+}
+.s3{
+	bottom: -37.8vh;
+}
+.s4{
+	bottom: -63.5vh;
+}
+.s5{
+	bottom: -89.2vh;
+}
+.s6{
+	bottom: -119vh;
+}
+.s7{
+	bottom: -144.7vh;
+}
+
+.c0{
+	bottom: 82.8vh;
+}
+.c1{
+	bottom: 58.6vh;
+}
+.c2{
+	bottom: -24vh;
+}
+/*64.5 5.5*/

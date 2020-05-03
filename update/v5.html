@@ -114,10 +114,34 @@ a {
 	position: fixed;
 	bottom:0%;
 	left: 50%;
-  	transform: translate(-50%, 0%);
+  transform: translate(-50%, 0%);
 	color: #e0e0e0;
-	opacity: 50%;
+  font-family: "Helvetica" !important;
+  font-size: 1vw !important;
+	/*opacity: 70% */);
 }
+
+
+.ovw{
+animation:8s ease 0s normal forwards 1 fadein;
+-webkit-animation:8s ease 0s normal forwards 1 fadein;
+opacity:1
+}
+
+@keyframes fadein{
+    0%{opacity:0}
+    50%{opacity:0}
+    100%{opacity:0.5}
+}
+
+@-webkit-keyframes fadein{
+    0%{opacity:0}
+    50%{opacity:0}
+    100%{opacity:.5}
+}
+
+
+
 .logo {
 	letter-spacing: 1vw !important;
 	font-size: 2vw !important;
@@ -13308,7 +13332,7 @@ a.anchor-link {
 <div class="reveal">
 <div class="slides">
 <section><section>
-<div class="ovw">press esc for site overview</div>
+<div class="ovw">press esc for site overview or → to continue</div>
 
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">

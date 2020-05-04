@@ -27,13 +27,13 @@
 		<a href="https://www.instagram.com/nihar_annam/" class="logo"><i class="fab fa-instagram"></i></a>
 		<a href="mailto:nihar.annam@gmail.com" class="logo"><i class="far fa-envelope"></i></a>
 		<a href="https://github.com/rahinroy" class="logo"><i class="fab fa-github"></i></a></div>
-		<div class="ovw" id="down">press esc for site overview or <i class="far fa-caret-square-right"></i> to continue</div>
+		<div class="ovw" id="down2">press esc for site overview or <i class="far fa-caret-square-right"></i> to continue</div>
 	</section>
 	<section data-background-color="#a5d6a7" data-background-transition="slide">
 		<h2>About Me</h2>
 		<p>I'm an incoming freshman studying Computer Science at the University of Texas at Austin. Most of my free time is spent on cooking, photography, and various data science projects. I love to try new foods and help manage a <a class="food" href="http://bit.ly/FoodSheet">food spreadsheet</a> with some friends.</p>
 	</section>
-    <section>
+    <section data-background-transition="slide">
 		<section data-background-color="#4db6ac" data-background-transition="slide">
 			<h2>Projects</h2>
 			<div id="down"><i class="fas fa-arrow-down"></i></div>
@@ -56,7 +56,7 @@
 			<p>Written in Python, planning to integrate with Flask/Heroku to make it online</p>
 		</section>
     </section>
-    <section>
+    <section data-background-transition="slide">
    		<section data-background-color="#9575cd" data-background-transition="slide">
 			<h2>Awards</h2>
 			<div id="down"><i class="fas fa-arrow-down"></i></div>
@@ -76,7 +76,7 @@
 			<p class="debate">USACO - Silver Division</p>
 		</section>
    	</section>
-   	<section>
+   	<section data-background-transition="slide">
    		<section data-background-color="#f06292" data-background-transition="slide">
 			<h2>Positions</h2>
 			<div id="down"><i class="fas fa-arrow-down"></i></div>
@@ -97,7 +97,11 @@
 </div>
 
 <script type="text/javascript">
-	Reveal.initialize();
+	Reveal.initialize({
+		progress: false,
+		controlsBackArrows: "hidden",
+		preloadIframes: true,
+	});
 </script>
 
 

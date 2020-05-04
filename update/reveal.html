@@ -6,6 +6,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/js/reveal.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/particlesjs/2.2.2/particles.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.0/jquery.min.js"></script>
 
 <script src="https://kit.fontawesome.com/5bb99b873b.js" crossorigin="anonymous"></script>
 
@@ -105,6 +106,7 @@
 </div>
 
 <script type="text/javascript">
+
 	Reveal.initialize({
 		progress: false,
 		hash: true,
@@ -114,9 +116,26 @@
 		viewDistance: 10,
 	});
 
-	document.addEventListener('keydown', (event) => {
+
+	function logKey() {
+		var x = document.getElementsByClassName("fas");
+		for (var z = 0; z < x.length; z++){
+			x[z].style.visibility = "hidden";
+		}
+		setTimeout(function appear() {
+			var x = document.getElementsByClassName("fas");
+			for (var z = 0; z < x.length; z++){
+				x[z].style.visibility = "visible";
+				console.log("efe");
+			}		
+		}, 1000);
+	}
+	document.addEventListener('keydown', logKey);
+
+	$(".fas").click(function(){
+		logKey();
+	})
     // do something
-});
 </script>
 
 

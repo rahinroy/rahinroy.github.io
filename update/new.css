@@ -167,6 +167,9 @@ p {
 	}
 }
 
+.fas {
+	opacity: .2 !important;
+}
 .ovw{
 animation:8s ease 0s normal forwards 1 fadein;
 -webkit-animation:8s ease 0s normal forwards 1 fadein;

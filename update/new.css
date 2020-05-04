@@ -151,7 +151,6 @@ p {
 	color: #212121;
 	font-size: 2vw !important;
 	animation: float 6s ease-in-out infinite;
-  	visibility: hidden;
 }
 
 

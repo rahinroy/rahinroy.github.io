@@ -18,69 +18,96 @@
 	  <canvas class="background"></canvas>
 	  	<header></header>
 	  	<main>
-	      <div class="container offset-s2">
+	      <div class="container">
 	        <div class="s8 name">Nihar Annam</div>
-	        <div class="s8 subtitle">CS Student @ UT Austin</div>
-	        <br><br>
+	        <br>
+	        <row class="row col">
+			        <div class="col s8 subtitle">CS Student @ UT Austin</div>
+		  			<div class="col s1"><a href="https://twitter.com/RahinRoy" target="_blank"><i class="fab fa-twitter .fa-fw"></i></a></div>
+		  			<div class="col s1"><a href="https://github.com/rahinroy" target="_blank"><i class="fab fa-github .fa-fw"></i></a></div>
+		  			<div class="col s1"><a href=""><i class="far fa-file .fa-fw"></i></a></div>
+		  			<div class="col s1"><a href="mailto:nihar.annam@gmail.com" target="_blank"><i class="far fa-envelope .fa-fw"></i></a></div>
+		  	</row>
+	        <br>
 	        <div class="body">
-		        <div class="row">
-			        <div class="col s3 header">
+			        <div class="header col s8">
 			        	About Me
 			        	<div class="divider"></div>
 			        </div>
-			        <div class="col s4 header offset-s1">
-			        	Projects
-			        	<div class="divider"></div>
-			        </div>
-			        <div class="col s3 header offset-s1">
-			        	Awards
-			        	<div class="divider"></div>
-			        </div>
-			    </div>
-			   	<div class="row">
-			        <div class="col s3 info">
+
+					<div class="info">
+						<br>
 			        	I'm a freshman studying Computer Science at the University of Texas at Austin. Most of my free time is spent on cooking, photography, and watching way too much esports. I love to try new foods and help manage a 
 			        	<a href="https://bit.ly/FoodSheet" target="_blank" class="food">food spreadsheet</a> 
 			        	with some friends.
 			        	<br><br>
-			        	Current coursework: Data Structures, Discrete Math, Linear Algebra
+			        	Current coursework: Data Structures, Discrete Math, Linear Algebra.
+			        	<br>
+			        	<br>
 			        </div>
-			        <div class="col s4 info offset-s1">
-			        	<div>
-			        		<div class="projTitle"><a href="https://github.com/rahinroy/TotalMusic" target="_blank">Total Music</a></div>
-			        		An interactive web app for Twitch.tv to allow streamers to broadcast music directly to the audience through Pub/Sub messaging.
-			        		<br>
-			        		<br>
-			        		<div class="projTitle"><a href="https://github.com/rahinroy/tabroomApp" target="_blank">Tabroom Mobile</a></div>
-			        		An unofficial mobile app for Tabroom.com, the main website for hosting speech and debate tournaments. Built in Dart with Flutter.
-			        		<br>
-			        		<br>
-			        		<div class="projTitle"><a href="https://github.com/rahinroy/messenger-counter" target="_blank">Message Counter</a></div>
-			        		Created a tool to analyze Facebook Messenger message and visualize patterns over time. Built in Python, using Matplotlib for data visualization.
-			        	</div>
+
+
+			        <div class="header col s8">
+			        	Projects
+			        	<div class="divider"></div>
 			        </div>
+
+			        <br>
+
+			        <div class="projTitle info"><a href="https://github.com/rahinroy/TotalMusic" target="_blank">
+						<b>Total Music</b>
+					</a></div>
+
+					<div class="info indent">
+						- An interactive web app for Twitch.tv to allow streamers to broadcast music directly to the audience
+						<br>
+						- Developed in HTML/CSS and JavaScript with AWS Lambda for backend support
+			        	<br>
+			        	<br>
+			        </div>
+
+
+	        		<div class="projTitle info"><a href="https://github.com/rahinroy/tabroomApp" target="_blank">
+	        			<b>Tabroom Mobile</b></a></div>
+	        		<div class="info indent">
+		        		 - An unofficial mobile app for Tabroom.com, the main website for hosting speech and debate tournaments
+		        		 <br>
+		        		 - Built in Dart with Flutter
+		        		<br>
+		        		<br>
+		        	</div>
+
+	        		<div class="projTitle info"><a href="https://github.com/rahinroy/messenger-counter" target="_blank"><b>Message Counter</b></a></div>
+	        		<div class="info indent">
+	        			- Created a tool to analyze Facebook Messenger message and visualize patterns over time <br>- Built in Python, using Matplotlib for data visualization
+	        		</div>
+	        		<br>
+
+			        <div class="header">
+			        	Awards
+			        	<div class="divider"></div>
+			        </div>
+			        <br>
 			        <div class="col s3 info offset-s1">
 		        		<div class="projTitle">Credit Suisse Coding Challenge</div>
-		        		- Top 25 U.S. (out of 656)
-		        		<br>
-		        		- Top 75 International (out of 4518)
-
-		        		<br>
+		        		<div class="indent">
+			        		- Top 25 U.S. (out of 656)
+			        		<br>
+			        		- Top 75 International (out of 4518)
+		        		</div>
 		        		<br>
 		        		
-		        		<div class="projTitle">Harvard Forensics Tournament</div>
-		        		- Top 4 (out of 392)
-		        		<br>
+		        		<div class=""><div class="projTitle">Harvard Forensics Tournament - Public Forum Debate</div></div>
+
+		        		<div class="indent">- Top 4 (out of 392)</div>
 						<br>
 
-		        		<div class="projTitle">UT Austin Longhorn Classic</div>
-		        		- Top 8 (out of 104)
+		        		<div class="projTitle">UT Austin Longhorn Classic - Public Forum Debate</div>
+		        		<div class="indent">- Top 8 (out of 104)</div>
 		        		<br>
-						<br>
 
-		        		<div class="projTitle">Capitol City Round Robin</div>
-		        		- 1st Place
-		        		<br>
+		        		<div class="projTitle">Capitol City Round Robin - Public Forum Debate</div>
+		        		<div class="indent">- 1st Place</div>
 						<br>
 
 			        </div>
@@ -90,12 +117,7 @@
 	   	</main>
 	  	<footer class="page-footer">
 	  		<div class="container offset-s2">
-		  		<row class="row">
-		  			<div class="col s1"><a href="https://twitter.com/RahinRoy" target="_blank"><i class="fab fa-twitter"></i></a></div>
-		  			<div class="col s1"><a href="https://github.com/rahinroy" target="_blank"><i class="fab fa-github"></i></a></div>
-		  			<div class="col s1"><i class="far fa-file"></i></div>
-		  			<div class="col s1"><a href="mailto:nihar.annam@gmail.com" target="_blank"><i class="far fa-envelope"></i></a></div>
-		  		</row>
+		  		
 		  	</div>
 	  	</footer>
     </body>

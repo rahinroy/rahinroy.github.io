@@ -29,13 +29,13 @@ body{
 	background-color: #424242;
 }
 
-.background {
-  
-	position:absolute;
-	display: block;
+.bgd {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    left: 0;
 	top: 0;
-	left: 0;
-	z-index: 0;
+	z-index: -1;
 	opacity: 35%;
 }
 

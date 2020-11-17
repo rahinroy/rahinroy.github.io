@@ -1,0 +1,101 @@
+body {
+    font-family: 'Montserrat', sans-serif;
+    background-color: #424242;
+}
+
+.cat{
+    font-size: 4em;
+    color: #eeeeee;
+}
+
+#name {
+    font-size: 0.5em;
+    font-weight: 300;
+    color: #bdbdbd;
+}
+
+#school {
+    color: #bdbdbd;
+    font-size: 0.5em;
+    font-weight: 300;
+    padding-bottom: 2.5%;
+
+}
+
+#bio, #projects, #awards {
+    font-weight: 600;
+}
+
+.lis {
+    padding-top: 2%;
+    padding-left: 5% !important;
+}
+
+#bio:hover {
+    color: #7bc74d !important;
+}
+
+#projects:hover {
+    color: #bc6ff1 !important;
+}
+
+#awards:hover {
+    color: #ffa45b !important;
+}
+
+
+#bio:hover, #projects:hover, #awards:hover {
+    cursor: pointer;
+}
+
+html,body{
+    overflow-x: hidden;
+}
+
+#info {
+    font-size: 0.4em;
+}
+
+
+.indent {
+    padding-left: 3%;
+    font-size: 0.3em;
+}
+
+.projTitle {
+    font-size: 0.5em;
+    color: #bc6ff1;
+}
+
+.projTitle:hover {
+    color: #bc6ff1;
+}
+
+
+
+.food:hover {
+    color: #7bc74d;
+    text-decoration: none;
+}
+
+.food {
+    color: #eeeeee;
+    text-decoration: underline;
+}
+
+.awarTitle {
+    font-size: 0.5em;
+    color: #ffa45b;
+}
+
+.projSep {
+    padding-top: 2%;
+}
+
+.ico{
+    color: #eeeeee !important; 
+}
+
+.ico:hover {
+    color: #01c5c4 !important;
+}

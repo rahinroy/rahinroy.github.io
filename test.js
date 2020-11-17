@@ -34,6 +34,10 @@ $(function(){
         if (!proj){
             $("#projects").css('color', '#bc6ff1');
             $(".projInfo").show("medium");
+            $('html, body').animate({
+                scrollTop: $("#projects").offset().top
+            }, 500);          
+            console.log("ahhh")
             proj = true;
         } else {
             $("#projects").css('color', '#eeeeee');
@@ -52,7 +56,7 @@ $(function(){
         }
         if (!awar){
             $("#awards").css('color', '#ffa45b');
-            $(".awarInfo").show("medium");
+            $(".awarInfo").show("medium");    
             awar = true;
         } else {
             $("#awards").css('color', '#eeeeee');

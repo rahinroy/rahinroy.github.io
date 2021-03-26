@@ -1,4 +1,10 @@
 $(function(){
+    // fetch('    https://bisque.cyverse.org/image_service/00-642ivNgRwu873DqNiXBE8Z')
+    // .then(response => response.json())
+    // .then(data => console.log(data));
+  
+
+
     var about = false;
     var proj = false;
     var awar = false;

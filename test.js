@@ -43,7 +43,6 @@ $(function(){
             $('html, body').animate({
                 scrollTop: $("#projects").offset().top
             }, 500);          
-            console.log("ahhh")
             proj = true;
         } else {
             $("#projects").css('color', '#eeeeee');

@@ -12,10 +12,11 @@ $.getJSON("https://niharannam.com/recipes.json", function(data) {
   $("#refreshButton").click(function() {reset()});
   $("#showButton").click(function() {show()});
   $("#guessButton").click(function() {guess()});
+  var conceptName = $('#aioConceptName').find(":selected").text();
 
 
 
-  function guess() {
+  function guess() {    
     let guess = $("#guess").val();
     if (guess){
       console.log(guess)
@@ -36,6 +37,8 @@ $.getJSON("https://niharannam.com/recipes.json", function(data) {
     $("#answer").empty()
     $("#correct").empty()
     $("#guess").val("")
+    let min = $('#min').find(":selected").val();
+
     let randomInt = Math.floor(Math.random() * (keys.length - 1));
     // console.log(data[keys[randomInt]])
     title = keys[randomInt]
@@ -43,16 +46,19 @@ $.getJSON("https://niharannam.com/recipes.json", function(data) {
     let ingredients = [];
 
     for(var k in recipe) ingredients.push(k);
-    console.log(recipe)
-    console.log(recipe[ingredients[0]])
+    if (ingredients.length >= min){
+      console.log(recipe)
+      console.log(recipe[ingredients[0]])
 
-    ingredients.forEach((i) => {
-      // console.log(i)
-      var li = $('<li/>')
-        .text(recipe[i] + " " + i)
-        .appendTo($('#ingred'))
-    })
-
+      ingredients.forEach((i) => {
+        // console.log(i)
+        var li = $('<li/>')
+          .text(recipe[i] + " " + i)
+          .appendTo($('#ingred'))
+      })
+    } else {
+      reset()
+    }
 
   }
 

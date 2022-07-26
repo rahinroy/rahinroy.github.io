@@ -1,0 +1,32 @@
+.wrapper {
+    display: grid;
+
+    grid-template-columns: repeat(10, 5vw);
+    grid-template-rows: repeat(10, 5vw);
+
+    /* grid-auto-rows: repeat(5, 1fr); */
+
+    grid-row-gap: 0.5vw;
+    grid-column-gap: 0.5vw;
+    height: 100vh;
+    
+    text-align: center;
+}
+
+.hidden_wrapper {
+    display: contents;
+}
+
+
+.item {
+    border-radius: 0.5vw;
+    border-color: #424242;
+    background: #73AD21;  
+    box-sizing: border-box;
+}
+
+html {
+    font-family: Georgia;
+    font-size: 4vw;
+    background-color: #e0e0e0;
+}

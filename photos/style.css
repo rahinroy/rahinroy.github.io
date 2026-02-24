@@ -1,0 +1,404 @@
+body {
+  font-family: Raleway, sans-serif;
+  background-color: #EEEEEE;
+  color: #212121;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Upload drop zone — full viewport, centered content */
+.drop-zone {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.drop-zone-inner {
+  border: 3px dashed #bbb;
+  border-radius: 10px;
+  padding: 80px 40px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.drop-zone p {
+  margin: 0;
+  font-size: 18px;
+  color: #555;
+}
+
+.drop-zone.drag-over {
+  background-color: #e0f5fe;
+}
+
+.drop-zone.drag-over .drop-zone-inner {
+  border-color: #03A9F4;
+}
+
+#file-input {
+  display: none;
+}
+
+#file-label {
+  color: #03A9F4;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* Workspace layout — fills full viewport */
+#workspace {
+  display: flex;
+  height: 100vh;
+  align-items: stretch;
+}
+
+#crop-container {
+  flex: 1;
+  min-width: 0;
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Cropper.js fills its share of the screen */
+.cropper-container {
+  max-height: 100vh !important;
+}
+
+/* Controls sidebar */
+#controls {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-label {
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #555;
+}
+
+/* Ratio preset buttons */
+#ratio-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ratio-btn {
+  padding: 5px 11px;
+  border: 2px solid #bbb;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.ratio-btn.active {
+  border-color: #03A9F4;
+  background: #03A9F4;
+  color: #fff;
+}
+
+.ratio-btn:hover:not(.active) {
+  border-color: #03A9F4;
+}
+
+/* Custom ratio inputs */
+#custom-ratio-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+#custom-ratio-inputs input[type="number"] {
+  width: 56px;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+}
+
+.ratio-sep {
+  font-weight: bold;
+  color: #888;
+}
+
+#apply-custom-ratio {
+  padding: 5px 10px;
+  background: #212121;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+}
+
+/* Custom instant tooltip */
+#tooltip {
+  position: fixed;
+  background: #212121;
+  color: #fff;
+  padding: 5px 9px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  z-index: 9999;
+  white-space: nowrap;
+}
+
+/* Disabled toggle state */
+.toggle-disabled {
+  opacity: 0.4;
+  cursor: not-allowed !important;
+}
+
+.toggle-disabled input[type="checkbox"] {
+  cursor: not-allowed;
+}
+
+/* Resize toggle */
+#resize-toggle-label {
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  color: #212121;
+}
+
+#resize-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Output dimension inputs */
+#dimension-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#dimension-inputs input[type="number"] {
+  width: 80px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+}
+
+.dim-sep {
+  color: #888;
+  font-size: 16px;
+}
+
+#lock-label {
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #212121;
+}
+
+/* Format select */
+#format-select {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+  background: #fff;
+  cursor: pointer;
+}
+
+/* Quality slider */
+#quality-slider {
+  width: 100%;
+  cursor: pointer;
+}
+
+/* Max file size */
+#maxsize-toggle-label {
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  color: #212121;
+}
+
+#maxsize-row {
+  display: flex;
+  gap: 0;
+}
+
+#maxsize-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+}
+
+#maxsize-unit {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 0 4px 4px 0;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+  background: #e8e8e8;
+  cursor: pointer;
+}
+
+/* Filename input */
+#filename-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+#filename-input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+}
+
+#filename-ext {
+  padding: 6px 8px;
+  background: #e8e8e8;
+  border: 1px solid #ccc;
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+}
+
+/* File size estimate */
+#file-size-display {
+  font-size: 12px;
+  color: #888;
+  text-align: right;
+}
+
+/* Action buttons */
+#action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#download-btn {
+  padding: 11px;
+  background: #212121;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: Raleway, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  transition: opacity 0.15s;
+}
+
+#download-btn:hover {
+  opacity: 0.85;
+}
+
+#reset-btn {
+  padding: 9px;
+  background: transparent;
+  border: 2px solid #bbb;
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: Raleway, sans-serif;
+  font-size: 13px;
+  color: #555;
+  transition: border-color 0.15s;
+}
+
+#reset-btn:hover {
+  border-color: #212121;
+  color: #212121;
+}
+
+/* Upload another link */
+#upload-another {
+  margin: 0;
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+#upload-another label {
+  color: #03A9F4;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Mobile: stack vertically, allow scrolling */
+@media (max-width: 700px) {
+  body {
+    overflow: auto;
+  }
+
+  #workspace {
+    flex-direction: column;
+    height: auto;
+  }
+
+  #crop-container {
+    width: 100%;
+    height: 60vh;
+  }
+
+  #controls {
+    width: 100%;
+    height: auto;
+  }
+}

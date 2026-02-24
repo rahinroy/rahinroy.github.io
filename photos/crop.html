@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crop + Resize</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="upload-zone" class="drop-zone">
+    <div class="drop-zone-inner">
+      <p id="drop-label">Drop an image here or <label for="file-input" id="file-label">click to upload</label></p>
+    </div>
+    <input id="file-input" type="file" accept="image/*">
+  </div>
+
+  <div id="workspace" class="hidden">
+
+    <div id="crop-container">
+      <img id="crop-image" src="" alt="Image to crop">
+    </div>
+
+    <div id="controls">
+
+      <div class="control-group">
+        <span class="control-label">Aspect Ratio</span>
+        <div id="ratio-buttons">
+          <button class="ratio-btn active" data-ratio="NaN">Free</button>
+          <button class="ratio-btn" data-ratio="1">1:1</button>
+          <button class="ratio-btn" data-ratio="1.3333">4:3</button>
+          <button class="ratio-btn" data-ratio="1.7778">16:9</button>
+          <button class="ratio-btn" data-ratio="custom">Custom</button>
+        </div>
+        <div id="custom-ratio-inputs" class="hidden">
+          <input id="custom-w" type="number" min="1" placeholder="W">
+          <span class="ratio-sep">:</span>
+          <input id="custom-h" type="number" min="1" placeholder="H">
+          <button id="apply-custom-ratio">Apply</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label id="resize-toggle-label">
+          <input id="resize-toggle" type="checkbox"> Custom output size
+        </label>
+        <div id="resize-inputs" class="hidden">
+          <div id="dimension-inputs">
+            <input id="out-width" type="number" min="1" placeholder="Width">
+            <span class="dim-sep">×</span>
+            <input id="out-height" type="number" min="1" placeholder="Height">
+          </div>
+          <label id="lock-label">
+            <input id="lock-ratio" type="checkbox" checked> Lock aspect ratio
+          </label>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Format</span>
+        <select id="format-select">
+          <option value="image/png">PNG</option>
+          <option value="image/jpeg">JPEG</option>
+        </select>
+      </div>
+
+      <div class="control-group hidden" id="quality-group">
+        <span class="control-label">Quality: <span id="quality-value">0.92</span></span>
+        <input id="quality-slider" type="range" min="0.1" max="1" step="0.01" value="0.92">
+      </div>
+
+      <div class="control-group">
+        <label id="maxsize-toggle-label">
+          <input id="maxsize-toggle" type="checkbox"> Custom file size
+        </label>
+        <div id="maxsize-inputs" class="hidden">
+          <div id="maxsize-row">
+            <input id="maxsize-input" type="number" min="1" placeholder="e.g. 500">
+            <select id="maxsize-unit">
+              <option value="KB">KB</option>
+              <option value="MB">MB</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Filename</span>
+        <div id="filename-row">
+          <input id="filename-input" type="text" spellcheck="false">
+          <span id="filename-ext">.png</span>
+        </div>
+      </div>
+
+      <div id="file-size-display" class="hidden">~<span id="file-size-value"></span></div>
+
+      <div id="action-buttons">
+        <button id="reset-btn">Reset</button>
+        <button id="download-btn">Crop + Download</button>
+      </div>
+
+      <p id="upload-another"><label for="file-input">Upload another image</label></p>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

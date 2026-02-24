@@ -140,21 +140,22 @@ function scaleCanvas(src, w, h) {
 }
 
 function fitToMaxSize(canvas, format, quality, targetBytes) {
+  var bestDataURL = null;
+
   // For lossy formats: binary search on quality first
   if (format !== 'image/png') {
     var lo = 0.01, hi = quality;
     for (var i = 0; i < 14; i++) {
       var mid = (lo + hi) / 2;
-      if (getDataURLBytes(canvas.toDataURL(format, mid)) <= targetBytes) {
+      var candidate = canvas.toDataURL(format, mid);
+      if (getDataURLBytes(candidate) <= targetBytes) {
         lo = mid;
+        bestDataURL = candidate;
       } else {
         hi = mid;
       }
     }
-    quality = lo;
-    if (getDataURLBytes(canvas.toDataURL(format, quality)) <= targetBytes) {
-      return canvas.toDataURL(format, quality);
-    }
+    if (bestDataURL) return bestDataURL;
   }
 
   // Binary search on scale factor (PNG, or lossy still too large at min quality)
@@ -163,15 +164,15 @@ function fitToMaxSize(canvas, format, quality, targetBytes) {
     var mid = (lo + hi) / 2;
     var w = Math.max(1, Math.round(canvas.width * mid));
     var h = Math.max(1, Math.round(canvas.height * mid));
-    if (getDataURLBytes(scaleCanvas(canvas, w, h).toDataURL(format, quality)) <= targetBytes) {
+    var candidate = scaleCanvas(canvas, w, h).toDataURL(format, quality);
+    if (getDataURLBytes(candidate) <= targetBytes) {
       lo = mid;
+      bestDataURL = candidate;
     } else {
       hi = mid;
     }
   }
-  var finalW = Math.max(1, Math.round(canvas.width * lo));
-  var finalH = Math.max(1, Math.round(canvas.height * lo));
-  return scaleCanvas(canvas, finalW, finalH).toDataURL(format, quality);
+  return bestDataURL;
 }
 
 function updateFileSize() {

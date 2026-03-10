@@ -1,0 +1,55 @@
+dba_name,ownership_name,agent_name,managers,source_list
+Benu,Benu LLC,Aarti Shetty,Corey Lee,michelin-3
+Quince,Quince Pacific Avenue LLC,Lindsay Tusk (via Verjus LLC),Lindsay Tusk,michelin-3
+Atelier Crenn,Atelier 123 Restaurant LLC,not found,,michelin-3
+Birdsong,Milieu LLC,Aarti Shetty,Aarti Shetty,michelin-2
+Acquerello,Acquerello Inc,Giancarlo Paterlini,"Giancarlo Paterlini; Michael Gresham; Suzette Gresham",michelin-2
+Sons & Daughters,Sons & Daughters LLC,not found,,michelin-2
+Saison,Saison Dining Group LLC,Jagjeet Kapoor,"Gary Gauba; Jagjeet Kapoor; Joshua Skenes; Mark Bright",michelin-2
+Californios,Californios Hospitality Group LLC,Carolyn Cantu,Californios Restaurant Group LLC,michelin-2
+Lazy Bear,Anagram Restaurant Group LLC,David Barzelay,Anagram Management Partnership,michelin-2
+Kiln,Kiln Restaurant LLC,Lisa W Liu,"John Wesley; Julianna Yang; T&M Restaurant Enterprises Inc",michelin-2
+Nari,Nari Suda LLC,Unalome Techamuanvivit,Somsa Holdings Inc,michelin-1
+Mister Jiu's,Mister Jiu's LLC,Brandon Jew,A Bigger Splash LLC,michelin-1
+Sorrel,Sorrel Restaurant LLC,Alex Hong,Alex Hong,michelin-1
+Angler SF,Angler Sf LLC,Jagjeet Kapoor,Saison Hospitality LLC,michelin-1
+Kin Khao,Pakin Corporation,Alexandra Foote,"Unalome Techamuanvivit (CEO/Director); Sam Zelver (Secretary/CFO)",michelin-1
+7 Adams,1963 Sutter LLC,Ryan Cole,"David Fisher; Ryan Benjamin Cole",michelin-1
+Niku Steakhouse,Top Beef LLC,Bingnan Feng,Top Beef Inc,michelin-1
+Ssal,Ssal Inc.,Junsoo Bae,"Junsoo Bae (CEO/Director); Hyunyoung Bae (CFO/Secretary)",michelin-1
+The Shota,Communion Culinary Co,Jisook Kim,"Ingi Son (CEO/Director); Sang Young Kim (Secretary/CFO/Director)",michelin-1
+State Bird Provisions,State Bird Provisions LLC,Stuart Brioza,Atomic Workshop Inc,michelin-1
+Madcap,n/a - located in San Anselmo (not SF),n/a,n/a,michelin-1
+San Ho Won,3rd Street Collaborative LLC,Susan L Schwegman,Corey Lee,michelin-1
+The Progress,The Progress Provisions LLC,Stuart Brioza,Atomic Workshop Inc,michelin-1
+Hilda and Jesse,Hilda And Jesse Rk LLC,not found,,michelin-1
+Restaurant Nisei,Restaurant Nisei LLC,David Yoshimura,David Yoshimura,michelin-1
+Del Popolo,Del Popolo LLC,Jonathan Darsky,Jonathan Darsky,bib-gourmand
+Trestle,531 Jackson St LLC,Ryan Cole,Ryan Cole,bib-gourmand
+Dumpling Home,Liu Shen Corporation,Jimmy Jianming Shen,"Jimmy Jianming Shen (CEO/Secretary/CFO); Jimmy Shen (Director)",bib-gourmand
+Izakaya Rintaro,Lintaro LLC,Sylvan Brackett,Sylvan Brackett,bib-gourmand
+A16,D O C Restaurant Group LLC,not found,,bib-gourmand
+Anchor Oyster Bar,Anchor Oyster Bar Inc,Roseann Grimm,Roseann Grimm (CEO),bib-gourmand
+Yank Sing,Deem Sum Intl Inc,not found,,bib-gourmand
+Bansang,Majin Enterprises Inc,Kwanmo Chong,"Heejung Yun (CEO/Director); Kwanmo Chong (CFO); Daeho Hwang (Secretary)",bib-gourmand
+Good Good Culture Club,Fish Sauce LLC,Jeffrey Hanak,"Jeffrey Hanak; Ravi Kapur",bib-gourmand
+Outerlands,Outerlands Restaurant Group LLC,Daniel J Kramer,Riley Bartlett,bib-gourmand
+Flores,2030 Union Street LLC,Adriano Paganini,Adriano Paganini (CEO/Manager),bib-gourmand
+Okane,F & L Provisions Inc,Bingnan Feng,"Bingnan Feng (CEO/Director/Secretary); Huan Zhang (Director); Min Park (CFO); Yue Yu (Director)",bib-gourmand
+Z & Y,Z & Y Restaurant,not found,,bib-gourmand
+Abaca,Abaca Food Group Inc.,not found,,eater-38
+Sotto Mare,North Beach Enterprises LLC,Dominic F Massoni,Richard M Azzolino,eater-38
+China Live,China Live Ventures Limitd Lp,not found,,eater-38
+House of Prime Rib,Betz & Sons Inc,Josef Betz,Josef Betz (CEO),eater-38
+Boulevard,Boulevard Inc,Nancy Oakes,"Nancy Oakes (CEO/CFO/Secretary/Director)",eater-38
+Octavia,Kore Restaurant Group LLC,Melissa Perello,Melissa K Perello,eater-38
+Mandalay,Golden Mandalay Inc,Chuan Chuan Dung,"Chuan Chuan Dung (CEO/CFO/Secretary/Director)",eater-38
+Aziza,Richmond Restaurants LLC,Zach Georgopoulos,"Mourad Lahlou (CEO); Ml Restaurant Management (Manager)",eater-38
+Zuni Cafe,Cucagna Ltd,Gilbert Pilgram,"Gilbert Pilgram (CEO/CFO/Secretary/Director)",eater-38
+Beit Rima,Beit Rima LLC,not found,,eater-38
+Prubechu,Hafa Bay LLC,Shawn Camacho,"Marc Dimalanta; Shawn Camacho; Shawn Naputi",eater-38
+True Laurel,Flower Shop LLC,Colleen Booth,"Colleen Booth; David Barzelay; Nicolas Torres",eater-38
+Flour+Water,Flour + Water LLC,Kara Bratcher,"Ne Timeas Restaurant Group Inc (Manager); Thomas Mcnaughton (CEO)",eater-38
+Flour+Water Pizzeria,Flour + Water Hospitality Group Inc,not found,,eater-38
+Besharam,1275 Restaurant Project LLC,Andrew Rappaport,Andrew Rappaport,eater-38
+Penny Roma/Flour+Water Pasta Shop,Central Kitchen LLC,Kara Bratcher,Kara Bratcher,eater-38

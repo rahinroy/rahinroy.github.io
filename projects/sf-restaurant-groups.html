@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SF Restaurant Ownership Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 14px 24px;
+    font-size: 20px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  header span { color: #e94560; }
+
+  .filter-bar {
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .filter-bar input[type="text"] {
+    padding: 7px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    width: 220px;
+  }
+
+  .filter-bar select {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #fff;
+  }
+
+  .filter-bar label {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .main-content {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .sidebar {
+    width: 360px;
+    min-width: 360px;
+    overflow-y: auto;
+    background: #fff;
+    border-right: 1px solid #ddd;
+    flex-shrink: 0;
+  }
+
+  .sidebar-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: #888;
+  }
+
+  .spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #e94560;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 14px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-message {
+    padding: 20px;
+    color: #c0392b;
+    text-align: center;
+  }
+
+  .group-card {
+    padding: 12px 18px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .group-card:hover { background: #f8f8fa; }
+  .group-card.active { background: #eef1ff; border-left: 3px solid #3b5bdb; }
+
+  .group-card .owner-name {
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .group-card .owner-name .count {
+    background: #e94560;
+    color: #fff;
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+
+  .group-card .restaurant-list {
+    list-style: none;
+    margin-top: 4px;
+  }
+
+  .group-card .restaurant-list.collapsed {
+    display: none;
+  }
+
+  .group-card .toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #999;
+    padding: 2px 5px;
+    line-height: 1;
+    transition: transform 0.2s;
+  }
+
+  .group-card .toggle-btn.collapsed {
+    transform: rotate(-90deg);
+  }
+
+  .group-card .restaurant-list li {
+    font-size: 13px;
+    color: #555;
+    padding: 2px 0 2px 10px;
+    position: relative;
+  }
+
+  .group-card .restaurant-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 9px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .group-card .restaurant-list li .addr {
+    font-size: 11px;
+    color: #999;
+  }
+
+  #map {
+    flex: 1;
+    min-height: 300px;
+  }
+
+  footer {
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 8px 24px;
+    font-size: 13px;
+    color: #777;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .main-content {
+      flex-direction: column;
+    }
+    .sidebar {
+      width: 100%;
+      min-width: 100%;
+      max-height: 40vh;
+      border-right: none;
+      border-bottom: 1px solid #ddd;
+    }
+    .filter-bar input[type="text"] { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<header>SF Restaurant <span>Ownership</span> Explorer</header>
+
+<div class="filter-bar">
+  <input type="text" id="search" placeholder="Search owner or restaurant...">
+  <select id="neighborhood"><option value="">All Neighborhoods</option></select>
+  <select id="minConcepts">
+    <option value="2">Min 2 concepts</option>
+    <option value="3">Min 3 concepts</option>
+    <option value="4">Min 4 concepts</option>
+    <option value="5">Min 5 concepts</option>
+  </select>
+  <label><input type="checkbox" id="hideChains" checked> Hide chains &amp; corporate caterers</label>
+</div>
+
+<div class="main-content">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-loading" id="loadingIndicator">
+      <div class="spinner"></div>
+      <div>Loading restaurant data...</div>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<footer id="footer">Loading...</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Constants ──
+
+  const API_URL = 'https://data.sfgov.org/resource/g8m3-pdis.json';
+
+  const CHAIN_BLOCKLIST = new Set([
+    'starbucks', 'chipotle', 'mcdonalds', 'mcdonald', 'subway', 'panda express',
+    'taco bell', 'burger king', 'wendys', 'popeyes', 'chick-fil-a', 'kfc',
+    'pizza hut', 'dominos', 'jack in the box', 'five guys', 'shake shack',
+    'sweetgreen', 'panera', 'dunkin', 'jamba', 'peet', 'philz',
+    'compass group', 'bon appetit management', 'sodexo', 'aramark',
+    'centerplate', 'delaware north', 'eurest', 'canteen',
+    'in-n-out', 'wingstop', 'el pollo loco', 'del taco', 'carls jr',
+    'habit burger', 'the habit', 'jersey mikes', 'jimmie johns', 'firehouse subs',
+    'tropical smoothie', 'auntie annes', 'cinnabon', 'wetzel', 'noodles and company',
+    'qdoba', 'moes southwest', 'checkers', 'rallys', 'sonic drive-in',
+    'arbys', 'long john silvers', 'white castle', 'church chicken',
+    'raising canes', 'zaxbys', 'cook out', 'culvers', 'whataburger'
+  ]);
+
+  const EXCLUDED_LICENSE_TYPES = [
+    'employee cafeteria', 'stadium', 'concession', 'commissary',
+    'cottage food', 'intermittent', 'nonprofit', 'charitable',
+    'temporary', 'catering vehicle', 'mobile food', 'pushcart',
+    'caterer', 'catering facilit', 'vending machine', 'school cafeteria'
+  ];
+
+  // DBA name patterns that indicate non-restaurant businesses
+  const EXCLUDED_DBA_PATTERNS = [
+    /\bcater(?:ing|er|s|ed)?\b/i,
+    /\bevents?\s*(?:mgmt|management|planning|pros?|space|center)\b/i,
+    /\bcorporate\s*(?:food|dining|kitchen)\b/i,
+    /\bvending\b/i,
+    /\bconsulting\b/i,
+    /\bculinary\s*group\b/i,
+    /\bguckenheimer\b/i,
+    /\beurest\b/i,
+    /\bmorrison\s*management\b/i,
+    /\bzerocater\b/i,
+    /\bcater2/i,
+    /\boff the grid services\b/i,
+    /\bepicurean group\b/i,
+    /\bfood\s*service/i,
+  ];
+
+  // ── Agent-based LLC grouping (from CA Secretary of State filings) ──
+  // Maps normalized ownership_name -> agent name for cross-referencing
+  const LLC_AGENTS = {
+    'benu': 'aarti shetty',
+    'milieu': 'aarti shetty',                         // Birdsong
+    '3rd street collaborative': 'corey lee',           // San Ho Won
+    'quince pacific avenue': 'lindsay tusk',
+    'verjus': 'lindsay tusk',
+    'saison dining group': 'jagjeet kapoor',
+    'angler sf': 'jagjeet kapoor',
+    'californios hospitality group': 'carolyn cantu',
+    'anagram restaurant group': 'david barzelay',      // Lazy Bear
+    'flower shop': 'david barzelay',                    // True Laurel
+    'tyger restaurant': 'david barzelay',               // JouJou
+    'state bird provisions': 'stuart brioza',
+    'progress provisions': 'stuart brioza',             // The Progress + Anchovy Bar
+    'flour water': 'kara bratcher',
+    'flour water hospitality group': 'kara bratcher',
+    'flour water mission rock': 'kara bratcher',
+    'central kitchen': 'kara bratcher',                 // Penny Roma, Salumeria
+    '1963 sutter': 'ryan cole',                         // 7 Adams
+    '531 jackson st': 'ryan cole',                      // Trestle
+    'top beef': 'bingnan feng',                         // Niku Steakhouse
+    'f l provisions': 'bingnan feng',                   // Okane
+    'nari suda': 'unalome techamuanvivit',              // Nari
+    'pakin': 'unalome techamuanvivit',                  // Kin Khao
+    'kiln restaurant': 'lisa w liu',
+    'mister jius': 'brandon jew',
+    'sorrel restaurant': 'alex hong',
+    'del popolo': 'jonathan darsky',
+    'lintaro': 'sylvan brackett',                       // Izakaya Rintaro
+    'acquerello': 'giancarlo paterlini',
+    '2030 union street': 'adriano paganini',            // Flores
+    'fish sauce': 'jeffrey hanak',                      // Good Good Culture Club
+    'richmond restaurants': 'mourad lahlou',            // Aziza
+    'kore restaurant group': 'melissa perello',         // Octavia
+    'boulevard': 'nancy oakes',
+    'cucagna': 'gilbert pilgram',                       // Zuni Cafe
+    'north beach enterprises': 'dominic f massoni',     // Sotto Mare
+    'betz sons': 'josef betz',                          // House of Prime Rib
+    'hafa bay': 'shawn camacho',                        // Prubechu
+    '1275 restaurant project': 'andrew rappaport',      // Besharam
+    'restaurant nisei': 'david yoshimura',
+    'ssal': 'junsoo bae',
+    'communion culinary': 'jisook kim',                 // The Shota
+    'outerlands restaurant group': 'daniel j kramer',
+    'majin enterprises': 'kwanmo chong',                // Bansang
+  };
+
+  // Build reverse map: agent -> list of normalized owner keys
+  const AGENT_TO_OWNERS = {};
+  for (const [llc, agent] of Object.entries(LLC_AGENTS)) {
+    if (!AGENT_TO_OWNERS[agent]) AGENT_TO_OWNERS[agent] = [];
+    AGENT_TO_OWNERS[agent].push(llc);
+  }
+
+  // ── Color palette for groups ──
+  const COLORS = [
+    '#e94560', '#3b5bdb', '#2ecc71', '#f39c12', '#9b59b6',
+    '#1abc9c', '#e67e22', '#e74c3c', '#3498db', '#8e44ad',
+    '#16a085', '#d35400', '#c0392b', '#2980b9', '#27ae60',
+    '#f1c40f', '#e91e63', '#00bcd4', '#ff5722', '#607d8b'
+  ];
+
+  // ── State ──
+  let allGroups = [];
+  let filteredGroups = [];
+  let allNeighborhoods = new Set();
+  let activeGroupIdx = null;
+  let map, markersLayer;
+
+  // ── DOM refs ──
+  const sidebar = document.getElementById('sidebar');
+  const loadingIndicator = document.getElementById('loadingIndicator');
+  const footer = document.getElementById('footer');
+  const searchInput = document.getElementById('search');
+  const neighborhoodSelect = document.getElementById('neighborhood');
+  const minConceptsSelect = document.getElementById('minConcepts');
+  const hideChainsCheckbox = document.getElementById('hideChains');
+
+  // ── Init map ──
+  map = L.map('map').setView([37.76, -122.44], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+
+  // ── Helpers ──
+
+  function normalizeName(name) {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .replace(/\b(llc|inc|corp|corporation|co|company|ltd|limited|lp|llp|dba|the)\b/gi, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function titleCase(str) {
+    if (!str) return '';
+    return str.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase());
+  }
+
+  function isExcludedLicense(desc) {
+    if (!desc) return false;
+    const lower = desc.toLowerCase();
+    return EXCLUDED_LICENSE_TYPES.some(ex => lower.includes(ex));
+  }
+
+  function isExcludedDba(name) {
+    if (!name) return false;
+    return EXCLUDED_DBA_PATTERNS.some(pat => pat.test(name));
+  }
+
+  function isChainByBlocklist(ownerNorm, restaurants) {
+    // Check if owner name matches blocklist
+    for (const chain of CHAIN_BLOCKLIST) {
+      if (ownerNorm.includes(chain)) return true;
+    }
+    // Check if any DBA matches blocklist
+    for (const r of restaurants) {
+      const dbaNorm = normalizeName(r.dba_name);
+      for (const chain of CHAIN_BLOCKLIST) {
+        if (dbaNorm.includes(chain)) return true;
+      }
+    }
+    return false;
+  }
+
+  function isChainByAlgorithm(restaurants) {
+    if (restaurants.length < 2) return false;
+    const names = restaurants.map(r => normalizeName(r.dba_name).replace(/\s*#?\d+\s*$/, ''));
+    const unique = new Set(names);
+    return unique.size === 1;
+  }
+
+  function deduplicateRestaurants(records) {
+    // First pass: dedupe by name+address
+    const byNameAddr = new Map();
+    for (const r of records) {
+      const normDba = normalizeName(r.dba_name);
+      const normAddr = (r.full_business_address || '').toLowerCase().trim();
+      const key = normDba + '||' + normAddr;
+      if (!byNameAddr.has(key)) {
+        byNameAddr.set(key, r);
+      }
+    }
+    // Second pass: dedupe by address alone (keep longest DBA name as most descriptive)
+    const byAddr = new Map();
+    for (const r of byNameAddr.values()) {
+      const normAddr = (r.full_business_address || '').toLowerCase().trim();
+      if (!normAddr) {
+        byAddr.set(Math.random().toString(), r);
+        continue;
+      }
+      if (!byAddr.has(normAddr)) {
+        byAddr.set(normAddr, r);
+      } else {
+        const existing = byAddr.get(normAddr);
+        if ((r.dba_name || '').length > (existing.dba_name || '').length) {
+          byAddr.set(normAddr, r);
+        }
+      }
+    }
+    return Array.from(byAddr.values());
+  }
+
+  function getDistinctConcepts(restaurants) {
+    const concepts = new Map();
+    for (const r of restaurants) {
+      const norm = normalizeName(r.dba_name).replace(/\s*#?\d+\s*$/, '');
+      if (!concepts.has(norm)) {
+        concepts.set(norm, r);
+      }
+    }
+    return Array.from(concepts.values());
+  }
+
+  // ── Data fetching & processing ──
+
+  async function fetchData() {
+    const params = new URLSearchParams({
+      '$where': "naic_code like '%7220%' AND location_end_date IS NULL",
+      '$limit': '10000'
+    });
+    const url = `${API_URL}?${params.toString()}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`API error: ${resp.status}`);
+    return await resp.json();
+  }
+
+  function processData(records) {
+    // Step 1: Filter out excluded license types and non-restaurant DBAs
+    let filtered = records.filter(r =>
+      !isExcludedLicense(r.lic_code_description) && !isExcludedDba(r.dba_name)
+    );
+
+    // Collect neighborhoods
+    allNeighborhoods = new Set();
+    for (const r of filtered) {
+      if (r.neighborhoods_analysis_boundaries) {
+        allNeighborhoods.add(r.neighborhoods_analysis_boundaries);
+      }
+    }
+
+    // Step 2: Group by normalized owner
+    const ownerMap = new Map();
+    for (const r of filtered) {
+      if (!r.ownership_name) continue;
+      const norm = normalizeName(r.ownership_name);
+      if (!norm) continue;
+      if (!ownerMap.has(norm)) {
+        ownerMap.set(norm, { ownerRaw: r.ownership_name, norm, restaurants: [] });
+      }
+      ownerMap.get(norm).restaurants.push(r);
+    }
+
+    // Step 2b: Merge owner groups that share a mailing address
+    // Build a map from mailing address to list of owner keys
+    const mailToOwners = new Map();
+    for (const [norm, group] of ownerMap) {
+      for (const r of group.restaurants) {
+        const mail = (r.mailing_address_1 || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        if (!mail) continue;
+        // Skip mailing addresses that are the same as the business address
+        // (these are single-location owners mailing to their shop, not shared offices)
+        const biz = (r.full_business_address || '').toLowerCase().replace(/\s+/g, ' ').trim();
+        if (mail === biz) continue;
+        if (!mailToOwners.has(mail)) mailToOwners.set(mail, new Set());
+        mailToOwners.get(mail).add(norm);
+      }
+    }
+
+    // For each mailing address shared by 2+ owners, merge them into one group
+    const merged = new Set(); // track owner keys already merged
+    const mergedOwnerMap = new Map();
+
+    for (const [mail, ownerKeys] of mailToOwners) {
+      if (ownerKeys.size < 2) continue;
+      // Find the canonical key (use the owner with the most restaurants)
+      const keys = Array.from(ownerKeys).filter(k => !merged.has(k));
+      if (keys.length < 2) continue;
+
+      keys.sort((a, b) => (ownerMap.get(b)?.restaurants.length || 0) - (ownerMap.get(a)?.restaurants.length || 0));
+      const canonKey = keys[0];
+
+      // Collect all owner names for display
+      const allOwnerNames = keys.map(k => ownerMap.get(k)?.ownerRaw).filter(Boolean);
+      const allRestaurants = [];
+      for (const k of keys) {
+        const g = ownerMap.get(k);
+        if (g) allRestaurants.push(...g.restaurants);
+        merged.add(k);
+      }
+
+      mergedOwnerMap.set(canonKey, {
+        ownerRaw: allOwnerNames[0],
+        ownerNames: allOwnerNames,
+        norm: canonKey,
+        restaurants: allRestaurants
+      });
+    }
+
+    // Build final owner list: merged groups + unmerged originals
+    const afterMailMerge = new Map();
+    for (const [key, group] of mergedOwnerMap) {
+      afterMailMerge.set(key, group);
+    }
+    for (const [norm, group] of ownerMap) {
+      if (!merged.has(norm)) {
+        afterMailMerge.set(norm, { ...group, ownerNames: [group.ownerRaw] });
+      }
+    }
+
+    // Step 2c: Merge owner groups that share a registered agent (from LLC_AGENTS lookup)
+    const agentMerged = new Set();
+    const finalOwnerMap = new Map();
+
+    // For each agent with 2+ LLCs, check which are present in our data and merge them
+    for (const [agent, llcKeys] of Object.entries(AGENT_TO_OWNERS)) {
+      if (llcKeys.length < 2) continue;
+
+      // Find which of these LLC keys match entries in afterMailMerge
+      const matchingKeys = [];
+      for (const [ownerNorm, group] of afterMailMerge) {
+        if (agentMerged.has(ownerNorm)) continue;
+        if (llcKeys.some(llcKey => ownerNorm.includes(llcKey) || llcKey.includes(ownerNorm))) {
+          matchingKeys.push(ownerNorm);
+        }
+      }
+      if (matchingKeys.length < 2) continue;
+
+      // Merge: pick the one with most restaurants as canonical
+      matchingKeys.sort((a, b) =>
+        (afterMailMerge.get(b)?.restaurants.length || 0) - (afterMailMerge.get(a)?.restaurants.length || 0)
+      );
+      const canonKey = matchingKeys[0];
+      const allOwnerNames = [];
+      const allRestaurants = [];
+      for (const k of matchingKeys) {
+        const g = afterMailMerge.get(k);
+        if (g) {
+          allOwnerNames.push(...(g.ownerNames || [g.ownerRaw]));
+          allRestaurants.push(...g.restaurants);
+        }
+        agentMerged.add(k);
+      }
+
+      finalOwnerMap.set(canonKey, {
+        ownerRaw: allOwnerNames[0],
+        ownerNames: [...new Set(allOwnerNames)],
+        norm: canonKey,
+        restaurants: allRestaurants
+      });
+    }
+
+    // Add non-merged groups
+    for (const [norm, group] of afterMailMerge) {
+      if (!agentMerged.has(norm)) {
+        finalOwnerMap.set(norm, group);
+      }
+    }
+
+    // Step 3: Deduplicate, detect chains, filter to multi-concept groups
+    const groups = [];
+    for (const [norm, group] of finalOwnerMap) {
+      const deduped = deduplicateRestaurants(group.restaurants);
+      const concepts = getDistinctConcepts(deduped);
+
+      const isChain = isChainByBlocklist(norm, deduped) || isChainByAlgorithm(concepts);
+
+      groups.push({
+        ownerRaw: group.ownerRaw,
+        ownerNames: group.ownerNames || [group.ownerRaw],
+        ownerNorm: norm,
+        restaurants: deduped,
+        concepts: concepts,
+        conceptCount: concepts.length,
+        isChain,
+        neighborhoods: new Set(deduped.map(r => r.neighborhoods_analysis_boundaries).filter(Boolean))
+      });
+    }
+
+    // Sort by concept count descending
+    groups.sort((a, b) => b.conceptCount - a.conceptCount);
+
+    return groups;
+  }
+
+  // ── Rendering ──
+
+  function populateNeighborhoods() {
+    const sorted = Array.from(allNeighborhoods).sort();
+    for (const n of sorted) {
+      const opt = document.createElement('option');
+      opt.value = n;
+      opt.textContent = n;
+      neighborhoodSelect.appendChild(opt);
+    }
+  }
+
+  function applyFilters() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const neighborhood = neighborhoodSelect.value;
+    const minConcepts = parseInt(minConceptsSelect.value, 10);
+    const hideChains = hideChainsCheckbox.checked;
+
+    filteredGroups = allGroups.filter(g => {
+      if (g.conceptCount < minConcepts) return false;
+      if (hideChains && g.isChain) return false;
+      if (neighborhood && !g.neighborhoods.has(neighborhood)) return false;
+      if (searchTerm) {
+        const ownerMatch = g.ownerNorm.includes(searchTerm) ||
+          (g.ownerNames || []).some(n => n.toLowerCase().includes(searchTerm));
+        const dbaMatch = g.restaurants.some(r =>
+          (r.dba_name || '').toLowerCase().includes(searchTerm)
+        );
+        if (!ownerMatch && !dbaMatch) return false;
+      }
+      return true;
+    });
+
+    activeGroupIdx = null;
+    renderSidebar();
+    renderMap();
+    updateFooter();
+  }
+
+  function renderSidebar() {
+    sidebar.innerHTML = '';
+
+    if (filteredGroups.length === 0) {
+      sidebar.innerHTML = '<div class="error-message">No matching restaurant groups found. Try adjusting filters.</div>';
+      return;
+    }
+
+    for (let i = 0; i < filteredGroups.length; i++) {
+      const g = filteredGroups[i];
+      const card = document.createElement('div');
+      card.className = 'group-card' + (i === activeGroupIdx ? ' active' : '');
+
+      const color = COLORS[i % COLORS.length];
+
+      let html = `<div class="owner-name">
+        <span>${escapeHtml(titleCase(g.ownerRaw))}</span>
+        <span>
+          <span class="count">${g.conceptCount}</span>
+          <button class="toggle-btn" data-idx="${i}" title="Collapse/expand">&#9660;</button>
+        </span>
+      </div>`;
+      if (g.ownerNames && g.ownerNames.length > 1) {
+        html += `<div style="font-size:11px;color:#888;margin-bottom:4px;font-style:italic">Also: ${g.ownerNames.slice(1).map(n => escapeHtml(titleCase(n))).join(', ')}</div>`;
+      }
+      html += `<ul class="restaurant-list" data-list-idx="${i}">`;
+      for (const r of g.concepts) {
+        html += `<li><span style="position:absolute;left:0;top:9px;width:5px;height:5px;border-radius:50%;background:${color}"></span>
+          ${escapeHtml(titleCase(r.dba_name || 'Unknown'))}
+          <div class="addr">${escapeHtml(r.full_business_address || '')}</div>
+        </li>`;
+      }
+      html += '</ul>';
+      card.innerHTML = html;
+
+      // Toggle collapse on button click
+      const toggleBtn = card.querySelector('.toggle-btn');
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const list = card.querySelector('.restaurant-list');
+        list.classList.toggle('collapsed');
+        toggleBtn.classList.toggle('collapsed');
+      });
+
+      // Select group on card click
+      card.addEventListener('click', () => selectGroup(i));
+
+      sidebar.appendChild(card);
+    }
+  }
+
+  function renderMap() {
+    markersLayer.clearLayers();
+
+    const bounds = [];
+
+    for (let i = 0; i < filteredGroups.length; i++) {
+      const g = filteredGroups[i];
+      const color = COLORS[i % COLORS.length];
+      const isActive = i === activeGroupIdx;
+
+      for (const r of g.restaurants) {
+        let lat, lng;
+
+        if (r.business_location && r.business_location.coordinates) {
+          lng = r.business_location.coordinates[0];
+          lat = r.business_location.coordinates[1];
+        } else if (r.business_location && r.business_location.latitude) {
+          lat = parseFloat(r.business_location.latitude);
+          lng = parseFloat(r.business_location.longitude);
+        } else if (r.location && r.location.coordinates) {
+          lng = r.location.coordinates[0];
+          lat = r.location.coordinates[1];
+        } else if (r.location && r.location.latitude) {
+          lat = parseFloat(r.location.latitude);
+          lng = parseFloat(r.location.longitude);
+        }
+
+        if (!lat || !lng || isNaN(lat) || isNaN(lng)) continue;
+
+        const radius = (activeGroupIdx === null || isActive) ? 7 : 4;
+        const opacity = (activeGroupIdx === null || isActive) ? 0.9 : 0.25;
+        const fillOpacity = (activeGroupIdx === null || isActive) ? 0.7 : 0.15;
+
+        const marker = L.circleMarker([lat, lng], {
+          radius,
+          color: color,
+          fillColor: color,
+          fillOpacity,
+          opacity,
+          weight: isActive ? 2 : 1
+        });
+
+        marker.bindPopup(`
+          <strong>${escapeHtml(titleCase(r.dba_name || 'Unknown'))}</strong><br>
+          ${escapeHtml(r.full_business_address || '')}<br>
+          <em style="color:#888">Owner: ${escapeHtml(titleCase(g.ownerRaw))}</em><br>
+          <a href="#" onclick="window._selectGroupByOwner('${g.ownerNorm.replace(/'/g, "\\'")}'); return false;">
+            Show all by this owner
+          </a>
+        `);
+
+        markersLayer.addLayer(marker);
+
+        if (isActive) bounds.push([lat, lng]);
+      }
+    }
+
+    if (activeGroupIdx !== null && bounds.length > 0) {
+      if (bounds.length === 1) {
+        map.setView(bounds[0], 16);
+      } else {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+      }
+    }
+  }
+
+  function selectGroup(idx) {
+    activeGroupIdx = idx;
+    renderSidebar();
+    renderMap();
+
+    // Scroll active card into view
+    const active = sidebar.querySelector('.group-card.active');
+    if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  window._selectGroupByOwner = function(ownerNorm) {
+    const idx = filteredGroups.findIndex(g => g.ownerNorm === ownerNorm);
+    if (idx >= 0) selectGroup(idx);
+  };
+
+  function updateFooter() {
+    const totalConcepts = filteredGroups.reduce((sum, g) => sum + g.conceptCount, 0);
+    const totalRestaurants = filteredGroups.reduce((sum, g) => sum + g.restaurants.length, 0);
+    footer.textContent = `Showing ${totalConcepts} concepts across ${filteredGroups.length} groups (${totalRestaurants} locations)`;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ── Event listeners ──
+
+  searchInput.addEventListener('input', debounce(applyFilters, 200));
+  neighborhoodSelect.addEventListener('change', applyFilters);
+  minConceptsSelect.addEventListener('change', applyFilters);
+  hideChainsCheckbox.addEventListener('change', applyFilters);
+
+  function debounce(fn, ms) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), ms);
+    };
+  }
+
+  // ── Bootstrap ──
+
+  async function init() {
+    try {
+      const records = await fetchData();
+      console.log(`Fetched ${records.length} records from SODA API`);
+
+      allGroups = processData(records);
+      console.log(`Processed into ${allGroups.length} owner groups`);
+
+      populateNeighborhoods();
+      applyFilters();
+
+      loadingIndicator.style.display = 'none';
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      loadingIndicator.innerHTML = `<div class="error-message">Failed to load data: ${escapeHtml(err.message)}<br><br><button onclick="location.reload()">Retry</button></div>`;
+      footer.textContent = 'Error loading data';
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

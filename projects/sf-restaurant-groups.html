@@ -217,13 +217,7 @@
 
 <div class="filter-bar">
   <input type="text" id="search" placeholder="Search owner or restaurant...">
-  <select id="neighborhood"><option value="">All Neighborhoods</option></select>
-  <select id="minConcepts">
-    <option value="2">Min 2 concepts</option>
-    <option value="3">Min 3 concepts</option>
-    <option value="4">Min 4 concepts</option>
-    <option value="5">Min 5 concepts</option>
-  </select>
+  <label>Min concepts: <input type="number" id="minConcepts" value="2" min="1" style="width:50px;padding:7px 6px;border:1px solid #ccc;border-radius:4px;font-size:14px;"></label>
   <label><input type="checkbox" id="hideChains" checked> Hide chains &amp; corporate caterers</label>
 </div>
 
@@ -354,7 +348,6 @@
   // ── State ──
   let allGroups = [];
   let filteredGroups = [];
-  let allNeighborhoods = new Set();
   let activeGroupIdx = null;
   let map, markersLayer;
 
@@ -363,7 +356,7 @@
   const loadingIndicator = document.getElementById('loadingIndicator');
   const footer = document.getElementById('footer');
   const searchInput = document.getElementById('search');
-  const neighborhoodSelect = document.getElementById('neighborhood');
+
   const minConceptsSelect = document.getElementById('minConcepts');
   const hideChainsCheckbox = document.getElementById('hideChains');
 
@@ -486,13 +479,6 @@
       !isExcludedLicense(r.lic_code_description) && !isExcludedDba(r.dba_name)
     );
 
-    // Collect neighborhoods
-    allNeighborhoods = new Set();
-    for (const r of filtered) {
-      if (r.neighborhoods_analysis_boundaries) {
-        allNeighborhoods.add(r.neighborhoods_analysis_boundaries);
-      }
-    }
 
     // Step 2: Group by normalized owner
     const ownerMap = new Map();
@@ -628,7 +614,7 @@
         concepts: concepts,
         conceptCount: concepts.length,
         isChain,
-        neighborhoods: new Set(deduped.map(r => r.neighborhoods_analysis_boundaries).filter(Boolean))
+        neighborhoods: new Set(deduped.map(r => r.neighborhoods_analysis_boundaries).filter(Boolean)),
       });
     }
 
@@ -640,26 +626,15 @@
 
   // ── Rendering ──
 
-  function populateNeighborhoods() {
-    const sorted = Array.from(allNeighborhoods).sort();
-    for (const n of sorted) {
-      const opt = document.createElement('option');
-      opt.value = n;
-      opt.textContent = n;
-      neighborhoodSelect.appendChild(opt);
-    }
-  }
 
   function applyFilters() {
     const searchTerm = searchInput.value.toLowerCase().trim();
-    const neighborhood = neighborhoodSelect.value;
-    const minConcepts = parseInt(minConceptsSelect.value, 10);
+    const minConcepts = parseInt(minConceptsSelect.value, 10) || 2;
     const hideChains = hideChainsCheckbox.checked;
 
     filteredGroups = allGroups.filter(g => {
       if (g.conceptCount < minConcepts) return false;
       if (hideChains && g.isChain) return false;
-      if (neighborhood && !g.neighborhoods.has(neighborhood)) return false;
       if (searchTerm) {
         const ownerMatch = g.ownerNorm.includes(searchTerm) ||
           (g.ownerNames || []).some(n => n.toLowerCase().includes(searchTerm));
@@ -824,8 +799,7 @@
   // ── Event listeners ──
 
   searchInput.addEventListener('input', debounce(applyFilters, 200));
-  neighborhoodSelect.addEventListener('change', applyFilters);
-  minConceptsSelect.addEventListener('change', applyFilters);
+  minConceptsSelect.addEventListener('input', debounce(applyFilters, 200));
   hideChainsCheckbox.addEventListener('change', applyFilters);
 
   function debounce(fn, ms) {
@@ -846,7 +820,6 @@
       allGroups = processData(records);
       console.log(`Processed into ${allGroups.length} owner groups`);
 
-      populateNeighborhoods();
       applyFilters();
 
       loadingIndicator.style.display = 'none';

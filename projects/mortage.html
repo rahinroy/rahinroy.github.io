@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home Buying Cost Calculator</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --text: #e1e4ed;
+    --text-dim: #8b8fa3;
+    --accent: #6c7cff;
+    --accent-dim: #4a56b8;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fbbf24;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 32px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .card h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field:last-child {
+    margin-bottom: 0;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap .prefix {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .input-wrap .suffix {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus {
+    border-color: var(--accent);
+  }
+  input.has-prefix {
+    padding-left: 24px;
+  }
+  input.has-suffix {
+    padding-right: 32px;
+  }
+  .results {
+    grid-column: 1 / -1;
+  }
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .result-item {
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .result-item .label {
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 4px;
+  }
+  .result-item .value {
+    font-size: 24px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .result-item .detail {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .highlight {
+    color: var(--accent);
+  }
+  .positive {
+    color: var(--green);
+  }
+  .negative {
+    color: var(--red);
+  }
+
+  .breakdown-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .breakdown-table th {
+    text-align: left;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breakdown-table td {
+    padding: 10px 12px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .breakdown-table tr:last-child td {
+    border-bottom: none;
+  }
+  .breakdown-table .row-label {
+    color: var(--text-dim);
+  }
+  .breakdown-table .row-value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+  }
+  .breakdown-table .total-row td {
+    font-weight: 700;
+    font-size: 16px;
+    border-top: 2px solid var(--border);
+    padding-top: 12px;
+  }
+
+  .assumptions {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+  .assumptions p {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.8;
+  }
+  .slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+  .slider-value {
+    min-width: 56px;
+    text-align: right;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+  .section-divider {
+    grid-column: 1 / -1;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 8px 0;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Home Buying Monthly Cost Calculator</h1>
+  <p class="subtitle">San Francisco &mdash; Estimate your true monthly cost including tax benefits</p>
+
+  <div class="grid">
+    <!-- Inputs: Property -->
+    <div class="card">
+      <h2>Property</h2>
+      <div class="field">
+        <label>Home Price</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="text" id="homePrice" value="1,200,000" class="has-prefix" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Down Payment</label>
+        <div class="slider-wrap">
+          <input type="range" id="downPctSlider" min="0" max="100" value="20">
+          <span class="slider-value" id="downPctLabel">20%</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:4px;" id="downAmtLabel">$240,000</div>
+      </div>
+      <div class="field">
+        <label>Monthly HOA Fees</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="text" id="hoa" value="500" class="has-prefix" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>Homeowner's Insurance (annual)</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="text" id="insurance" value="1,500" class="has-prefix" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <!-- Inputs: Mortgage & Taxes -->
+    <div class="card">
+      <h2>Mortgage &amp; Income</h2>
+      <div class="field">
+        <label>Mortgage Interest Rate</label>
+        <div class="slider-wrap">
+          <input type="range" id="rateSlider" min="200" max="1000" value="685">
+          <span class="slider-value" id="rateLabel">6.85%</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Loan Term</label>
+        <div class="slider-wrap">
+          <input type="range" id="termSlider" min="10" max="30" value="30" step="5">
+          <span class="slider-value" id="termLabel">30 yr</span>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mortgage Year</label>
+        <div class="slider-wrap">
+          <input type="range" id="yearSlider" min="1" max="30" value="1">
+          <span class="slider-value" id="yearLabel">Year 1</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;" id="yearNote">Interest vs principal shifts over time</div>
+      </div>
+      <div class="field">
+        <label>Annual Gross Income (W-2)</label>
+        <div class="input-wrap">
+          <span class="prefix">$</span>
+          <input type="text" id="income" value="250,000" class="has-prefix" inputmode="numeric">
+        </div>
+      </div>
+      <div class="field">
+        <label>SF Property Tax Rate</label>
+        <div class="input-wrap">
+          <input type="text" id="propTaxRate" value="1.18268" class="has-suffix" inputmode="decimal">
+          <span class="suffix">%</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">FY 2025-26 SF rate: 1.18268%</div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card results">
+      <h2>Monthly Cost Breakdown</h2>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="label">Mortgage Payment</div>
+          <div class="value" id="resMortgage">$0</div>
+          <div class="detail" id="resMortgageDetail">principal + interest</div>
+        </div>
+        <div class="result-item">
+          <div class="label">Property Tax</div>
+          <div class="value" id="resPropTax">$0</div>
+          <div class="detail" id="resPropTaxDetail">/yr</div>
+        </div>
+        <div class="result-item">
+          <div class="label">HOA + Insurance</div>
+          <div class="value" id="resHoaIns">$0</div>
+        </div>
+        <div class="result-item">
+          <div class="label">Tax Benefit (monthly)</div>
+          <div class="value positive" id="resTaxBenefit">-$0</div>
+          <div class="detail" id="resTaxBenefitDetail"></div>
+        </div>
+      </div>
+
+      <table class="breakdown-table">
+        <thead>
+          <tr><th>Item</th><th style="text-align:right">Monthly</th><th style="text-align:right">Annual</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-label">Mortgage (P&I)</td>
+            <td class="row-value" id="tbMortgage"></td>
+            <td class="row-value" id="tbMortgageAnn"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Property Tax</td>
+            <td class="row-value" id="tbPropTax"></td>
+            <td class="row-value" id="tbPropTaxAnn"></td>
+          </tr>
+          <tr>
+            <td class="row-label">HOA</td>
+            <td class="row-value" id="tbHoa"></td>
+            <td class="row-value" id="tbHoaAnn"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Homeowner's Insurance</td>
+            <td class="row-value" id="tbInsurance"></td>
+            <td class="row-value" id="tbInsuranceAnn"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Gross Monthly Cost</td>
+            <td class="row-value" id="tbGross"></td>
+            <td class="row-value" id="tbGrossAnn"></td>
+          </tr>
+          <tr>
+            <td class="row-label" style="color:var(--green)">Tax Benefit (incremental from home purchase)</td>
+            <td class="row-value positive" id="tbTaxSave"></td>
+            <td class="row-value positive" id="tbTaxSaveAnn"></td>
+          </tr>
+          <tr class="total-row">
+            <td>Net Monthly Cost</td>
+            <td class="row-value highlight" id="tbNet"></td>
+            <td class="row-value highlight" id="tbNetAnn"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Tax detail -->
+    <div class="card results">
+      <h2>Tax Deduction Detail</h2>
+      <table class="breakdown-table">
+        <thead>
+          <tr><th>Deduction Component</th><th style="text-align:right">Annual Amount</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-label" id="tdMortIntLabel">Mortgage Interest (Year 1)</td>
+            <td class="row-value" id="tdMortInt"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Property Tax</td>
+            <td class="row-value" id="tdPropTax"></td>
+          </tr>
+          <tr>
+            <td class="row-label">CA State Income Tax</td>
+            <td class="row-value" id="tdStateTax"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Total SALT (property + state income tax)</td>
+            <td class="row-value" id="tdSaltTotal"></td>
+          </tr>
+          <tr>
+            <td class="row-label">SALT Cap Applied</td>
+            <td class="row-value" id="tdSaltCapped"></td>
+          </tr>
+          <tr>
+            <td class="row-label" style="font-weight:600">Total Itemized Deductions (with house)</td>
+            <td class="row-value" style="font-weight:600" id="tdItemized"></td>
+          </tr>
+          <tr><td colspan="2" style="padding:12px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);border-bottom:none">Baseline (without house)</td></tr>
+          <tr>
+            <td class="row-label">Standard Deduction (single)</td>
+            <td class="row-value" id="tdStandard"></td>
+          </tr>
+          <tr>
+            <td class="row-label">SALT-only Itemized (CA tax capped)</td>
+            <td class="row-value" id="tdSaltOnly"></td>
+          </tr>
+          <tr>
+            <td class="row-label" style="font-weight:600">Baseline Deduction Used</td>
+            <td class="row-value" style="font-weight:600" id="tdBaseline"></td>
+          </tr>
+          <tr>
+            <td class="row-label" id="tdBaselineNote" style="font-size:12px;color:var(--text-dim);border-bottom:none;padding-top:0" colspan="2"></td>
+          </tr>
+          <tr><td colspan="2" style="padding:12px 12px 4px;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);border-bottom:none">Incremental Benefit</td></tr>
+          <tr>
+            <td class="row-label" style="color:var(--green);font-weight:600">Additional Deduction from House</td>
+            <td class="row-value positive" style="font-weight:600" id="tdBenefit"></td>
+          </tr>
+          <tr>
+            <td class="row-label">Marginal Federal Tax Rate</td>
+            <td class="row-value" id="tdMargRate"></td>
+          </tr>
+          <tr class="total-row">
+            <td style="color:var(--green)">Annual Federal Tax Savings (from house)</td>
+            <td class="row-value positive" id="tdSavings"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="assumptions">
+      <p>
+        <strong>Assumptions &amp; Sources:</strong>
+        SF property tax rate 1.18268% per <a href="https://sftreasurer.org/property/secured-property-taxes" style="color:var(--accent)">SF Treasurer FY 2025-26</a>.
+        Federal standard deduction $15,000 (single, 2025). SALT cap $40,000 per OBBBA.
+        Mortgage interest deduction on up to $750k of loan principal.
+        Tax savings calculated as the incremental federal tax reduction from buying a house.
+        If your CA state income tax alone exceeds the standard deduction, the baseline assumes you're already itemizing with SALT — only the additional benefit from mortgage interest and property tax is counted.
+        CA state tax estimated using 2025 brackets.
+        Use the Mortgage Year slider to see how the interest/principal split and tax benefit change over the life of the loan.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---- Constants ----
+const STANDARD_DEDUCTION = 15000;
+const SALT_CAP = 40000;
+const MORTGAGE_INTEREST_LOAN_CAP = 750000;
+
+// 2025 Federal brackets (single)
+const FED_BRACKETS = [
+  { min: 0,       max: 11925,   rate: 0.10 },
+  { min: 11925,   max: 48475,   rate: 0.12 },
+  { min: 48475,   max: 103350,  rate: 0.22 },
+  { min: 103350,  max: 197300,  rate: 0.24 },
+  { min: 197300,  max: 250525,  rate: 0.32 },
+  { min: 250525,  max: 626350,  rate: 0.35 },
+  { min: 626350,  max: Infinity, rate: 0.37 },
+];
+
+// 2025 CA brackets (single)
+const CA_BRACKETS = [
+  { min: 0,       max: 11079,   rate: 0.01 },
+  { min: 11079,   max: 26264,   rate: 0.02 },
+  { min: 26264,   max: 41452,   rate: 0.04 },
+  { min: 41452,   max: 57542,   rate: 0.06 },
+  { min: 57542,   max: 72724,   rate: 0.08 },
+  { min: 72724,   max: 371479,  rate: 0.093 },
+  { min: 371479,  max: 445771,  rate: 0.103 },
+  { min: 445771,  max: 742953,  rate: 0.113 },
+  { min: 742953,  max: 1000000, rate: 0.123 },
+  { min: 1000000, max: Infinity, rate: 0.133 },
+];
+
+// ---- Utility ----
+function parseNum(str) {
+  return parseFloat(str.replace(/[^0-9.\-]/g, '')) || 0;
+}
+
+function fmt(n) {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
+}
+
+function calcTax(taxableIncome, brackets) {
+  let tax = 0;
+  for (const b of brackets) {
+    if (taxableIncome <= b.min) break;
+    const taxable = Math.min(taxableIncome, b.max) - b.min;
+    tax += taxable * b.rate;
+  }
+  return tax;
+}
+
+function getMarginalRate(taxableIncome, brackets) {
+  let rate = 0;
+  for (const b of brackets) {
+    if (taxableIncome > b.min) rate = b.rate;
+  }
+  return rate;
+}
+
+// Format input with commas
+function formatInput(el) {
+  const val = parseNum(el.value);
+  if (!isNaN(val) && val > 0) {
+    el.value = Math.round(val).toLocaleString('en-US');
+  }
+}
+
+// ---- Calculation ----
+function calculate() {
+  const homePrice = parseNum(document.getElementById('homePrice').value);
+  const downPct = parseFloat(document.getElementById('downPctSlider').value) / 100;
+  const hoa = parseNum(document.getElementById('hoa').value);
+  const insurance = parseNum(document.getElementById('insurance').value);
+  const annualRate = parseFloat(document.getElementById('rateSlider').value) / 10000;
+  const termYears = parseInt(document.getElementById('termSlider').value);
+  const mortgageYear = parseInt(document.getElementById('yearSlider').value);
+  const income = parseNum(document.getElementById('income').value);
+  const propTaxRate = parseFloat(document.getElementById('propTaxRate').value) / 100;
+
+  // Loan
+  const downPayment = homePrice * downPct;
+  const loanAmount = homePrice - downPayment;
+  const monthlyRate = annualRate / 12;
+  const numPayments = termYears * 12;
+
+  // Monthly mortgage payment (P&I)
+  let monthlyMortgage = 0;
+  if (monthlyRate > 0 && numPayments > 0 && loanAmount > 0) {
+    monthlyMortgage = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
+  }
+
+  // Interest for the selected mortgage year (amortize forward)
+  let selectedYearInterest = 0;
+  let selectedYearPrincipal = 0;
+  let balance = loanAmount;
+  let remainingBalance = loanAmount;
+  const startMonth = (mortgageYear - 1) * 12;
+  const endMonth = Math.min(mortgageYear * 12, numPayments);
+  for (let i = 0; i < endMonth && balance > 0; i++) {
+    const interestPayment = balance * monthlyRate;
+    const principalPayment = monthlyMortgage - interestPayment;
+    if (i >= startMonth) {
+      selectedYearInterest += interestPayment;
+      selectedYearPrincipal += principalPayment;
+    }
+    if (i === startMonth) {
+      remainingBalance = balance;
+    }
+    balance -= principalPayment;
+  }
+
+  // Cap mortgage interest deduction to interest on $750k of loan
+  const effectiveLoanForDeduction = Math.min(loanAmount, MORTGAGE_INTEREST_LOAN_CAP);
+  const deductibleInterest = selectedYearInterest * (effectiveLoanForDeduction / Math.max(loanAmount, 1));
+
+  // Property tax
+  const annualPropTax = homePrice * propTaxRate;
+  const monthlyPropTax = annualPropTax / 12;
+
+  // HOA & insurance monthly
+  const monthlyInsurance = insurance / 12;
+  const monthlyHoaIns = hoa + monthlyInsurance;
+
+  // CA state income tax (on gross income minus CA standard deduction $5,706)
+  const caStandardDeduction = 5706;
+  const caTaxableIncome = Math.max(0, income - caStandardDeduction);
+  const caStateTax = calcTax(caTaxableIncome, CA_BRACKETS);
+
+  // SALT: property tax + state income tax, capped
+  const saltWithHouse = annualPropTax + caStateTax;
+  const saltWithHouseCapped = Math.min(saltWithHouse, SALT_CAP);
+
+  // SALT without house: just state income tax, capped
+  const saltWithoutHouse = caStateTax;
+  const saltWithoutHouseCapped = Math.min(saltWithoutHouse, SALT_CAP);
+
+  // Total itemized deductions WITH house
+  const totalItemized = deductibleInterest + saltWithHouseCapped;
+
+  // Baseline deduction WITHOUT house:
+  // If CA state tax alone (capped) > standard deduction, you'd already be itemizing
+  const baselineDeduction = Math.max(STANDARD_DEDUCTION, saltWithoutHouseCapped);
+  const alreadyItemizing = saltWithoutHouseCapped > STANDARD_DEDUCTION;
+
+  // Incremental deduction from buying a house
+  const withHouseDeduction = Math.max(totalItemized, baselineDeduction);
+  const additionalDeduction = withHouseDeduction - baselineDeduction;
+
+  // Federal tax without homeownership (baseline deduction)
+  const taxableWithBaseline = Math.max(0, income - baselineDeduction);
+  const fedTaxBaseline = calcTax(taxableWithBaseline, FED_BRACKETS);
+
+  // Federal tax with homeownership (with-house deduction)
+  const taxableWithHouse = Math.max(0, income - withHouseDeduction);
+  const fedTaxWithHouse = calcTax(taxableWithHouse, FED_BRACKETS);
+
+  // Annual federal tax savings from the house specifically
+  const annualTaxSavings = Math.max(0, fedTaxBaseline - fedTaxWithHouse);
+  const monthlyTaxSavings = annualTaxSavings / 12;
+
+  // Marginal rate
+  const marginalRate = getMarginalRate(taxableWithBaseline, FED_BRACKETS);
+
+  // Gross & net monthly
+  const grossMonthly = monthlyMortgage + monthlyPropTax + hoa + monthlyInsurance;
+  const netMonthly = grossMonthly - monthlyTaxSavings;
+
+  // ---- Render ----
+  document.getElementById('resMortgage').textContent = fmt(monthlyMortgage);
+  document.getElementById('resMortgageDetail').textContent = `${fmt(loanAmount)} loan at ${(annualRate * 100).toFixed(2)}% · Yr ${mortgageYear}: ${fmt(selectedYearInterest)} int / ${fmt(selectedYearPrincipal)} prin`;
+  document.getElementById('resPropTax').textContent = fmt(monthlyPropTax);
+  document.getElementById('resPropTaxDetail').textContent = `${fmt(annualPropTax)}/yr`;
+  document.getElementById('resHoaIns').textContent = fmt(monthlyHoaIns);
+  document.getElementById('resTaxBenefit').textContent = `-${fmt(monthlyTaxSavings)}`;
+  document.getElementById('resTaxBenefitDetail').textContent = alreadyItemizing
+    ? 'incremental benefit (already itemizing from CA tax)'
+    : (totalItemized > STANDARD_DEDUCTION ? 'itemizing saves you money' : 'standard deduction is better');
+
+  if (annualTaxSavings <= 0) {
+    document.getElementById('resTaxBenefit').className = 'value';
+    document.getElementById('resTaxBenefit').textContent = '$0';
+  } else {
+    document.getElementById('resTaxBenefit').className = 'value positive';
+  }
+
+  // Table
+  document.getElementById('tbMortgage').textContent = fmt(monthlyMortgage);
+  document.getElementById('tbMortgageAnn').textContent = fmt(monthlyMortgage * 12);
+  document.getElementById('tbPropTax').textContent = fmt(monthlyPropTax);
+  document.getElementById('tbPropTaxAnn').textContent = fmt(annualPropTax);
+  document.getElementById('tbHoa').textContent = fmt(hoa);
+  document.getElementById('tbHoaAnn').textContent = fmt(hoa * 12);
+  document.getElementById('tbInsurance').textContent = fmt(monthlyInsurance);
+  document.getElementById('tbInsuranceAnn').textContent = fmt(insurance);
+  document.getElementById('tbGross').textContent = fmt(grossMonthly);
+  document.getElementById('tbGrossAnn').textContent = fmt(grossMonthly * 12);
+  document.getElementById('tbTaxSave').textContent = annualTaxSavings > 0 ? `-${fmt(monthlyTaxSavings)}` : '$0';
+  document.getElementById('tbTaxSaveAnn').textContent = annualTaxSavings > 0 ? `-${fmt(annualTaxSavings)}` : '$0';
+  document.getElementById('tbNet').textContent = fmt(netMonthly);
+  document.getElementById('tbNetAnn').textContent = fmt(netMonthly * 12);
+
+  // Tax detail
+  document.getElementById('tdMortIntLabel').textContent = `Mortgage Interest (Year ${mortgageYear})`;
+  document.getElementById('tdMortInt').textContent = fmt(deductibleInterest);
+  document.getElementById('tdPropTax').textContent = fmt(annualPropTax);
+  document.getElementById('tdStateTax').textContent = fmt(caStateTax);
+  document.getElementById('tdSaltTotal').textContent = fmt(saltWithHouse);
+  document.getElementById('tdSaltCapped').textContent = fmt(saltWithHouseCapped);
+  document.getElementById('tdItemized').textContent = fmt(totalItemized);
+  document.getElementById('tdStandard').textContent = fmt(STANDARD_DEDUCTION);
+  document.getElementById('tdSaltOnly').textContent = fmt(saltWithoutHouseCapped);
+  document.getElementById('tdBaseline').textContent = fmt(baselineDeduction);
+  document.getElementById('tdBaselineNote').textContent = alreadyItemizing
+    ? `Your CA state tax (${fmt(caStateTax)}) exceeds the standard deduction — you'd already itemize without a house`
+    : 'Standard deduction is used as baseline (CA tax alone doesn\'t exceed it)';
+  document.getElementById('tdBenefit').textContent = fmt(additionalDeduction);
+  document.getElementById('tdMargRate').textContent = (marginalRate * 100).toFixed(0) + '%';
+  document.getElementById('tdSavings').textContent = fmt(annualTaxSavings);
+}
+
+// ---- LocalStorage persistence ----
+const STORAGE_KEY = 'housecalc';
+const allInputIds = ['homePrice', 'hoa', 'insurance', 'income', 'propTaxRate',
+                     'downPctSlider', 'rateSlider', 'termSlider', 'yearSlider'];
+
+function saveInputs() {
+  const data = {};
+  allInputIds.forEach(id => { data[id] = document.getElementById(id).value; });
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadInputs() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    allInputIds.forEach(id => {
+      if (data[id] != null) document.getElementById(id).value = data[id];
+    });
+    // Sync slider labels
+    document.getElementById('downPctLabel').textContent = document.getElementById('downPctSlider').value + '%';
+    const price = parseNum(document.getElementById('homePrice').value);
+    document.getElementById('downAmtLabel').textContent = fmt(price * parseInt(document.getElementById('downPctSlider').value) / 100);
+    document.getElementById('rateLabel').textContent = (parseInt(document.getElementById('rateSlider').value) / 100).toFixed(2) + '%';
+    document.getElementById('termLabel').textContent = document.getElementById('termSlider').value + ' yr';
+    const yearSlider = document.getElementById('yearSlider');
+    yearSlider.max = document.getElementById('termSlider').value;
+    document.getElementById('yearLabel').textContent = 'Year ' + yearSlider.value;
+  } catch (e) {}
+}
+
+loadInputs();
+
+// ---- Event wiring ----
+const textInputs = ['homePrice', 'hoa', 'insurance', 'income'];
+textInputs.forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => { calculate(); saveInputs(); });
+  el.addEventListener('blur', () => { formatInput(el); calculate(); saveInputs(); });
+});
+
+document.getElementById('propTaxRate').addEventListener('input', () => { calculate(); saveInputs(); });
+
+// Down payment slider
+const downSlider = document.getElementById('downPctSlider');
+downSlider.addEventListener('input', () => {
+  const pct = parseInt(downSlider.value);
+  document.getElementById('downPctLabel').textContent = pct + '%';
+  const price = parseNum(document.getElementById('homePrice').value);
+  document.getElementById('downAmtLabel').textContent = fmt(price * pct / 100);
+  calculate();
+  saveInputs();
+});
+
+// Rate slider
+const rateSlider = document.getElementById('rateSlider');
+rateSlider.addEventListener('input', () => {
+  const rate = parseInt(rateSlider.value) / 100;
+  document.getElementById('rateLabel').textContent = rate.toFixed(2) + '%';
+  calculate();
+  saveInputs();
+});
+
+// Term slider
+const termSlider = document.getElementById('termSlider');
+termSlider.addEventListener('input', () => {
+  document.getElementById('termLabel').textContent = termSlider.value + ' yr';
+  // Sync year slider max to loan term
+  const yearSlider = document.getElementById('yearSlider');
+  const maxYear = parseInt(termSlider.value);
+  yearSlider.max = maxYear;
+  if (parseInt(yearSlider.value) > maxYear) {
+    yearSlider.value = maxYear;
+    document.getElementById('yearLabel').textContent = 'Year ' + maxYear;
+  }
+  calculate();
+  saveInputs();
+});
+
+// Year slider
+const yearSlider = document.getElementById('yearSlider');
+yearSlider.addEventListener('input', () => {
+  document.getElementById('yearLabel').textContent = 'Year ' + yearSlider.value;
+  calculate();
+  saveInputs();
+});
+
+// Initial calculation
+calculate();
+</script>
+</body>
+</html>

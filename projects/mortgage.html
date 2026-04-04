@@ -272,6 +272,55 @@
     font-size: 12px;
     margin-top: 2px;
   }
+  .chart-tooltip .tt-extra {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .rent-highlight {
+    color: var(--orange);
+  }
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-wrap input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 36px;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-wrap input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: var(--text-dim);
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .toggle-wrap input[type="checkbox"]:checked {
+    background: var(--accent-dim);
+  }
+  .toggle-wrap input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+    background: var(--accent);
+  }
+  .toggle-label {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
 </style>
 </head>
 <body>
@@ -353,6 +402,58 @@
           <span class="suffix">%</span>
         </div>
         <div style="font-size:11px;color:var(--text-dim);margin-top:3px;">FY 2025-26 SF rate: 1.18268%</div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- Rent vs Buy Inputs -->
+    <div class="card results">
+      <h2>Rent vs Buy Comparison</h2>
+      <div class="grid" style="margin-bottom: 24px;">
+        <div class="field">
+          <label>Monthly Rent</label>
+          <div class="input-wrap">
+            <span class="prefix">$</span>
+            <input type="text" id="monthlyRent" value="3,500" class="has-prefix" inputmode="numeric">
+          </div>
+        </div>
+        <div class="field">
+          <label>Risk-Free Rate (e.g. T-bill / HYSA)</label>
+          <div class="slider-wrap">
+            <input type="range" id="riskFreeSlider" min="0" max="1000" value="430">
+            <span class="slider-value" id="riskFreeLabel">4.30%</span>
+          </div>
+        </div>
+        <div class="field">
+          <label>Comparison Horizon</label>
+          <div class="slider-wrap">
+            <input type="range" id="horizonSlider" min="1" max="30" value="10">
+            <span class="slider-value" id="horizonLabel">10 yr</span>
+          </div>
+        </div>
+        <div class="field">
+          <label class="toggle-wrap">
+            <input type="checkbox" id="includeDownPayment">
+            <span class="toggle-label">Include down payment opportunity cost</span>
+          </label>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px;" id="downPaymentNote">The down payment could earn RFR instead — adds its compounded returns to renter wealth</div>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:20px;">
+        When renting, the monthly savings (buy &minus; rent) compound at the risk-free rate over the horizon.
+        The chart shows what annual home appreciation would match the renter's accumulated wealth from investing those savings.
+      </p>
+
+      <!-- Rent vs Buy Chart -->
+      <div class="chart-container" id="rentChartContainer">
+        <canvas id="rentChartCanvas"></canvas>
+        <div class="chart-tooltip" id="rentChartTooltip">
+          <div class="tt-price" id="rttPrice"></div>
+          <div class="tt-value" id="rttValue"></div>
+          <div class="tt-delta" id="rttDelta"></div>
+          <div class="tt-extra" id="rttExtra"></div>
+        </div>
       </div>
     </div>
 
@@ -513,6 +614,8 @@
         If your CA state income tax alone exceeds the standard deduction, the baseline assumes you're already itemizing with SALT — only the additional benefit from mortgage interest and property tax is counted.
         CA state tax estimated using 2025 brackets.
         Use the Mortgage Year slider to see how the interest/principal split and tax benefit change over the life of the loan.
+        Rent vs buy comparison: the renter invests monthly savings (buy net cost &minus; rent) at the risk-free rate, compounding monthly over the comparison horizon.
+        Required appreciation is the annual rate needed for the home to gain equivalent value. Focuses on recurring monthly costs only, not down payment opportunity cost.
       </p>
     </div>
   </div>
@@ -710,18 +813,23 @@ function calculate() {
   document.getElementById('tdMargRate').textContent = (marginalRate * 100).toFixed(0) + '%';
   document.getElementById('tdSavings').textContent = fmt(r.annualTaxSavings);
 
-  // Update chart
+  // Update charts
   drawChart();
+  drawRentChart();
 }
 
 // ---- LocalStorage persistence ----
 const STORAGE_KEY = 'housecalc';
 const allInputIds = ['homePrice', 'hoa', 'insurance', 'income', 'propTaxRate',
-                     'downPctSlider', 'rateSlider', 'termSlider', 'yearSlider'];
+                     'downPctSlider', 'rateSlider', 'termSlider', 'yearSlider',
+                     'monthlyRent', 'riskFreeSlider', 'horizonSlider', 'includeDownPayment'];
 
 function saveInputs() {
   const data = {};
-  allInputIds.forEach(id => { data[id] = document.getElementById(id).value; });
+  allInputIds.forEach(id => {
+    const el = document.getElementById(id);
+    data[id] = el.type === 'checkbox' ? el.checked : el.value;
+  });
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
@@ -731,7 +839,11 @@ function loadInputs() {
   try {
     const data = JSON.parse(raw);
     allInputIds.forEach(id => {
-      if (data[id] != null) document.getElementById(id).value = data[id];
+      if (data[id] != null) {
+        const el = document.getElementById(id);
+        if (el.type === 'checkbox') el.checked = data[id];
+        else el.value = data[id];
+      }
     });
     // Sync slider labels
     document.getElementById('downPctLabel').textContent = document.getElementById('downPctSlider').value + '%';
@@ -742,13 +854,15 @@ function loadInputs() {
     const yearSlider = document.getElementById('yearSlider');
     yearSlider.max = document.getElementById('termSlider').value;
     document.getElementById('yearLabel').textContent = 'Year ' + yearSlider.value;
+    document.getElementById('riskFreeLabel').textContent = (parseInt(document.getElementById('riskFreeSlider').value) / 100).toFixed(2) + '%';
+    document.getElementById('horizonLabel').textContent = document.getElementById('horizonSlider').value + ' yr';
   } catch (e) {}
 }
 
 loadInputs();
 
 // ---- Event wiring ----
-const textInputs = ['homePrice', 'hoa', 'insurance', 'income'];
+const textInputs = ['homePrice', 'hoa', 'insurance', 'income', 'monthlyRent'];
 textInputs.forEach(id => {
   const el = document.getElementById(id);
   el.addEventListener('input', () => { calculate(); saveInputs(); });
@@ -797,6 +911,29 @@ termSlider.addEventListener('input', () => {
 const yearSlider = document.getElementById('yearSlider');
 yearSlider.addEventListener('input', () => {
   document.getElementById('yearLabel').textContent = 'Year ' + yearSlider.value;
+  calculate();
+  saveInputs();
+});
+
+// Risk-free rate slider
+const riskFreeSlider = document.getElementById('riskFreeSlider');
+riskFreeSlider.addEventListener('input', () => {
+  const rate = parseInt(riskFreeSlider.value) / 100;
+  document.getElementById('riskFreeLabel').textContent = rate.toFixed(2) + '%';
+  calculate();
+  saveInputs();
+});
+
+// Horizon slider
+const horizonSlider = document.getElementById('horizonSlider');
+horizonSlider.addEventListener('input', () => {
+  document.getElementById('horizonLabel').textContent = horizonSlider.value + ' yr';
+  calculate();
+  saveInputs();
+});
+
+// Include down payment toggle
+document.getElementById('includeDownPayment').addEventListener('change', () => {
   calculate();
   saveInputs();
 });
@@ -1013,6 +1150,274 @@ chartContainer.addEventListener('mouseleave', () => {
 
 window.addEventListener('resize', () => {
   renderChart();
+  renderRentChart();
+});
+
+// ---- Rent vs Buy Chart ----
+const rentChartCanvas = document.getElementById('rentChartCanvas');
+const rentChartCtx = rentChartCanvas.getContext('2d');
+const rentChartContainer = document.getElementById('rentChartContainer');
+const rentChartTooltip = document.getElementById('rentChartTooltip');
+let rentChartData = [];
+
+function drawRentChart() {
+  const homePrice = parseNum(document.getElementById('homePrice').value);
+  const monthlyRent = parseNum(document.getElementById('monthlyRent').value);
+  const riskFreeRate = parseInt(document.getElementById('riskFreeSlider').value) / 10000;
+  const horizonYears = parseInt(document.getElementById('horizonSlider').value);
+  const includeDP = document.getElementById('includeDownPayment').checked;
+  const downPct = parseFloat(document.getElementById('downPctSlider').value) / 100;
+
+  const minPrice = Math.max(100000, homePrice - 400000);
+  const maxPrice = homePrice + 600000;
+  const step = 25000;
+
+  rentChartData = [];
+  for (let p = minPrice; p <= maxPrice; p += step) {
+    const r = calcNetMonthlyCost(p);
+    const netMonthlyCostBuying = r.netMonthly;
+    const monthlyDiff = netMonthlyCostBuying - monthlyRent;
+
+    const monthlyRFR = riskFreeRate / 12;
+    const totalMonths = horizonYears * 12;
+
+    // FV of monthly savings compounded at RFR
+    let renterWealth;
+    if (monthlyRFR > 0.000001) {
+      renterWealth = monthlyDiff * ((Math.pow(1 + monthlyRFR, totalMonths) - 1) / monthlyRFR);
+    } else {
+      renterWealth = monthlyDiff * totalMonths;
+    }
+
+    // Down payment opportunity cost: renter keeps the down payment invested at RFR
+    let dpOpportunityCost = 0;
+    if (includeDP) {
+      const downPayment = p * downPct;
+      dpOpportunityCost = downPayment * (Math.pow(1 + riskFreeRate, horizonYears) - 1);
+      renterWealth += dpOpportunityCost;
+    }
+
+    // Required annual appreciation so house gains match renter wealth
+    const ratio = renterWealth / p;
+    let requiredAppreciation;
+    if (ratio <= -1) {
+      requiredAppreciation = -100;
+    } else {
+      requiredAppreciation = (Math.pow(1 + ratio, 1 / horizonYears) - 1) * 100;
+    }
+
+    rentChartData.push({
+      price: p,
+      requiredAppreciation: requiredAppreciation,
+      netMonthlyCost: netMonthlyCostBuying,
+      monthlyDiff: monthlyDiff,
+      renterWealth: renterWealth,
+      dpOpportunityCost: dpOpportunityCost,
+      horizonYears: horizonYears,
+    });
+  }
+
+  renderRentChart();
+}
+
+function renderRentChart(hoverIdx) {
+  const dpr = window.devicePixelRatio || 1;
+  const rect = rentChartContainer.getBoundingClientRect();
+  const w = rect.width;
+  const h = rect.height;
+  rentChartCanvas.width = w * dpr;
+  rentChartCanvas.height = h * dpr;
+  rentChartCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const pad = { top: 24, right: 16, bottom: 40, left: 64 };
+  const plotW = w - pad.left - pad.right;
+  const plotH = h - pad.top - pad.bottom;
+
+  if (rentChartData.length < 2) return;
+
+  const vals = rentChartData.map(d => d.requiredAppreciation);
+  const minVal = Math.min(...vals);
+  const maxVal = Math.max(...vals);
+  const range = maxVal - minVal || 1;
+  const yPad = range * 0.08;
+  const yMin = Math.min(minVal - yPad, 0);
+  const yMax = maxVal + yPad;
+
+  function xPos(i) { return pad.left + (i / (rentChartData.length - 1)) * plotW; }
+  function yPos(v) { return pad.top + (1 - (v - yMin) / (yMax - yMin)) * plotH; }
+
+  const ctx = rentChartCtx;
+  ctx.clearRect(0, 0, w, h);
+
+  // Y grid lines and labels
+  const yTicks = 5;
+  const yStep = (yMax - yMin) / yTicks;
+  ctx.font = '11px -apple-system, system-ui, sans-serif';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i <= yTicks; i++) {
+    const val = yMin + i * yStep;
+    const y = yPos(val);
+    ctx.strokeStyle = '#2a2d3a';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(w - pad.right, y);
+    ctx.stroke();
+    ctx.fillStyle = '#8b8fa3';
+    ctx.fillText(val.toFixed(1) + '%', pad.left - 8, y);
+  }
+
+  // Zero line
+  if (yMin < 0 && yMax > 0) {
+    const zeroY = yPos(0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(pad.left, zeroY);
+    ctx.lineTo(w - pad.right, zeroY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // X labels
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  const labelEvery = Math.max(1, Math.floor(rentChartData.length / 6));
+  for (let i = 0; i < rentChartData.length; i += labelEvery) {
+    const x = xPos(i);
+    ctx.fillStyle = '#8b8fa3';
+    const priceLabel = rentChartData[i].price >= 1000000
+      ? '$' + (rentChartData[i].price / 1000000).toFixed(1) + 'M'
+      : '$' + (rentChartData[i].price / 1000) + 'k';
+    ctx.fillText(priceLabel, x, pad.top + plotH + 8);
+  }
+  if ((rentChartData.length - 1) % labelEvery !== 0) {
+    const lastI = rentChartData.length - 1;
+    ctx.fillStyle = '#8b8fa3';
+    const priceLabel = rentChartData[lastI].price >= 1000000
+      ? '$' + (rentChartData[lastI].price / 1000000).toFixed(1) + 'M'
+      : '$' + (rentChartData[lastI].price / 1000) + 'k';
+    ctx.fillText(priceLabel, xPos(lastI), pad.top + plotH + 8);
+  }
+
+  // Color the line: green where appreciation < 0 (buying wins), orange otherwise
+  for (let i = 0; i < rentChartData.length - 1; i++) {
+    const x1 = xPos(i), y1 = yPos(rentChartData[i].requiredAppreciation);
+    const x2 = xPos(i + 1), y2 = yPos(rentChartData[i + 1].requiredAppreciation);
+    const avg = (rentChartData[i].requiredAppreciation + rentChartData[i + 1].requiredAppreciation) / 2;
+    ctx.strokeStyle = avg <= 0 ? '#34d399' : '#fbbf24';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  }
+
+  // Gradient fill
+  const gradient = ctx.createLinearGradient(0, pad.top, 0, pad.top + plotH);
+  gradient.addColorStop(0, 'rgba(251, 191, 36, 0.12)');
+  gradient.addColorStop(1, 'rgba(251, 191, 36, 0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  for (let i = 0; i < rentChartData.length; i++) {
+    const x = xPos(i);
+    const y = yPos(rentChartData[i].requiredAppreciation);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.lineTo(xPos(rentChartData.length - 1), pad.top + plotH);
+  ctx.lineTo(xPos(0), pad.top + plotH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Current home price marker
+  const homePrice = parseNum(document.getElementById('homePrice').value);
+  const currentIdx = rentChartData.findIndex(d => d.price === homePrice);
+  if (currentIdx >= 0) {
+    const cx = xPos(currentIdx);
+    const cy = yPos(rentChartData[currentIdx].requiredAppreciation);
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0f1117';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Hover
+  if (hoverIdx != null && hoverIdx >= 0 && hoverIdx < rentChartData.length) {
+    const hx = xPos(hoverIdx);
+    const hy = yPos(rentChartData[hoverIdx].requiredAppreciation);
+
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(hx, pad.top);
+    ctx.lineTo(hx, pad.top + plotH);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(hx, hy, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#0f1117';
+    ctx.beginPath();
+    ctx.arc(hx, hy, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    const d = rentChartData[hoverIdx];
+    document.getElementById('rttPrice').textContent = 'Home Price: ' + fmt(d.price);
+    const appVal = d.requiredAppreciation;
+    document.getElementById('rttValue').textContent = appVal.toFixed(2) + '% annual appreciation needed';
+    document.getElementById('rttValue').style.color = appVal <= 0 ? 'var(--green)' : 'var(--orange)';
+
+    if (appVal <= 0) {
+      document.getElementById('rttDelta').textContent = 'Buying is cheaper than renting even with 0% appreciation';
+      document.getElementById('rttDelta').style.color = 'var(--green)';
+    } else {
+      document.getElementById('rttDelta').textContent = 'Net cost: ' + fmt(Math.round(d.netMonthlyCost)) + '/mo buy vs ' + fmt(parseNum(document.getElementById('monthlyRent').value)) + '/mo rent';
+      document.getElementById('rttDelta').style.color = 'var(--text-dim)';
+    }
+    const diffSign = d.monthlyDiff >= 0 ? '+' : '-';
+    let extraText = diffSign + fmt(Math.round(Math.abs(d.monthlyDiff))) + '/mo difference \u00b7 renter wealth after ' + d.horizonYears + 'yr: ' + fmt(Math.round(d.renterWealth));
+    if (d.dpOpportunityCost > 0) {
+      extraText += ' (incl. ' + fmt(Math.round(d.dpOpportunityCost)) + ' from down payment)';
+    }
+    document.getElementById('rttExtra').textContent = extraText;
+
+    rentChartTooltip.style.opacity = '1';
+    let tx = hx + 12;
+    let ty = hy - 50;
+    const ttRect = rentChartTooltip.getBoundingClientRect();
+    if (tx + ttRect.width > w - pad.right) tx = hx - ttRect.width - 12;
+    if (ty < pad.top) ty = pad.top;
+    rentChartTooltip.style.left = tx + 'px';
+    rentChartTooltip.style.top = ty + 'px';
+  } else {
+    rentChartTooltip.style.opacity = '0';
+  }
+}
+
+rentChartContainer.addEventListener('mousemove', (e) => {
+  const rect = rentChartContainer.getBoundingClientRect();
+  const mx = e.clientX - rect.left;
+  const pad = { left: 64, right: 16 };
+  const plotW = rect.width - pad.left - pad.right;
+  const frac = (mx - pad.left) / plotW;
+  const idx = Math.round(frac * (rentChartData.length - 1));
+  if (idx >= 0 && idx < rentChartData.length) {
+    renderRentChart(idx);
+  }
+});
+
+rentChartContainer.addEventListener('mouseleave', () => {
+  renderRentChart();
 });
 
 // Initial calculation

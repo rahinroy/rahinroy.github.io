@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🇰🇷 Nick's Korea Trip — Food & Shopping List</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      padding: 32px 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcb77, #4d96ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 10px;
+    }
+    .done-bar {
+      background: #0d2b0d;
+      border: 1px solid #2a5a2a;
+      border-radius: 12px;
+      padding: 12px 20px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      color: #6bcb77;
+      font-weight: 600;
+    }
+    .section { margin-bottom: 36px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #222;
+    }
+    .section-header h2 { font-size: 1.2rem; font-weight: 700; }
+    .badge {
+      background: #333;
+      color: #aaa;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .cards {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    }
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      padding: 18px;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .card:hover { border-color: #555; transform: translateY(-2px); }
+    .card-type {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 8px;
+    }
+    .type-restaurant { color: #ff6b6b; }
+    .type-cafe { color: #ffd93d; }
+    .type-shopping { color: #4d96ff; }
+    .card-name { font-size: 1.05rem; font-weight: 700; margin-bottom: 5px; }
+    .card-location { font-size: 0.82rem; color: #888; margin-bottom: 6px; }
+    .card-note { font-size: 0.82rem; color: #bbb; line-height: 1.55; }
+    .card-reel {
+      margin-top: 10px;
+      font-size: 0.75rem;
+      border-top: 1px solid #222;
+      padding-top: 8px;
+    }
+    .card-reel a { color: #555; text-decoration: none; }
+    .card-reel a:hover { color: #999; }
+    .wide-card {
+      grid-column: 1 / -1;
+      background: #111820;
+      border: 1px solid #1e3a5a;
+    }
+    .wide-card .card-type { color: #4d96ff; }
+    .tag-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .tag {
+      background: #1a2a3a;
+      border: 1px solid #2a4a6a;
+      color: #7ab8e8;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-weight: 500;
+    }
+    .tag-area {
+      font-size: 0.68rem;
+      color: #555;
+      display: block;
+      margin-top: 1px;
+    }
+    .tag-restaurant {
+      background: #2a1a1a;
+      border: 1px solid #6a2a2a;
+      color: #e88a7a;
+    }
+    .score {
+      display: inline-block;
+      background: #2a2010;
+      color: #ffd93d;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 6px;
+    }
+    .new-badge {
+      display: inline-block;
+      background: #1a3a1a;
+      color: #6bcb77;
+      border: 1px solid #2a6a2a;
+      border-radius: 6px;
+      padding: 1px 7px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .summary {
+      text-align: center;
+      color: #555;
+      font-size: 0.82rem;
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #1a1a1a;
+    }
+  </style>
+</head>
+<body>
+
+<h1>🇰🇷 Korea Trip</h1>
+<p class="subtitle">Restaurants, Cafés & Shopping from Nick's 118 saved reels — fully scanned ✓</p>
+
+<div class="done-bar">
+  ✅ &nbsp;All 118 reels scanned · 39 restaurants · 36 cafés/bakeries · 5 shopping spots
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ RESTAURANTS -->
+<div class="section">
+  <div class="section-header">
+    <span>🍽️</span>
+    <h2>Restaurants</h2>
+    <span class="badge">39</span>
+  </div>
+  <div class="cards">
+
+    <!-- From annachaannn mega-list -->
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul</div>
+      <div class="card-name">Haemong (해몽)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">The best smokey chargrilled back ribs the poster has ever had. Staff regularly check your ribs are cooked perfectly.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Sashimi</div>
+      <div class="card-name">바다회사랑 (Bada.sa.rang)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Go here when yellowfish (방어) is in season. Famous for thick-cut yellowfish and salmon sashimi. Order a small 매운탕 (spicy stew) to end the meal.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Snacks</div>
+      <div class="card-name">송이네 (Songe Bunsik)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Fried squid kimbap + extra fried squid side. Must dip into tteokbokki sauce — order that too!</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Chicken</div>
+      <div class="card-name">화육계 (Hwayuggye)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Spicy & fiery chicken feet pairs perfectly with DIY seaweed rice balls, perilla leaves, and egg rolls.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul</div>
+      <div class="card-name">진작 Jinjak Original</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Korean intestine rice bowl — intestine marinade, tangy onions, wasabi & egg yolk make it perfectly balanced. Great intro to 곱창.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Sashimi</div>
+      <div class="card-name">바다애 (Badaae)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Backup spot for 바다회사랑 when the lines are too long. Same dishes — thick-cut yellowfish and salmon sashimi.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Korean Course</div>
+      <div class="card-name">한가람 (Hangaram)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Unique medicinal/healthy hanjeongsik (Korean full-course). Standout: abalone & beef shank set.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Crab</div>
+      <div class="card-name">Sejong Ganjang Gejang</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Soy marinated crabs AND soy marinated abalone (rare!). Pair with a warm abalone congee. The texture of the abalone is firm yet tender.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Sinsa — Crab</div>
+      <div class="card-name">Pro Ganjang Gejang Sinsa</div>
+      <div class="card-location">📍 Sinsa-dong, Seoul</div>
+      <div class="card-note">Spicy marinated crabs (양념게장) mixed with rice and seaweed. The crab roe is next level.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Myeongdong — Michelin ⭐</div>
+      <div class="card-name">Myeongdong Kyoja (명동교자)</div>
+      <div class="card-location">📍 Myeongdong, Seoul</div>
+      <div class="card-note">Multiple-year Michelin Bib Gourmand. Seoul institution — kalguksu noodles and mandu dumplings. No introduction needed.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Pork</div>
+      <div class="card-name">Myth Jokbal</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Can't get enough of the garlic sauce lathered over the top of the jokbal (braised pork trotters).</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <!-- From allegrasbeli -->
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Beli 9.8/10 — Steak</div>
+      <div class="card-name">Born and Bred</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Upscale steak tasting restaurant. Highly rated by a Top 900 Beli user — steak tasting course.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Gangnam · Beli 9.9/10</div>
+      <div class="card-name">강남면옥 (Gangnam Myeonok)</div>
+      <div class="card-location">📍 Gangnam, Seoul</div>
+      <div class="card-note">Korean classics done perfectly: galbijjim (braised short ribs), naengmyeon (cold noodles), mandu. One of the highest-rated in the city.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Beli 9.9/10 — Hotpot</div>
+      <div class="card-name">최가네버섯매운탕칼국수</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Spicy mushroom hotpot with kalguksu noodles and special shabu shabu. Finish with fried rice.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Gwanghwamun · Beli 9.9/10</div>
+      <div class="card-name">광화문국밥 (Gwanghwamun Gukbap)</div>
+      <div class="card-location">📍 Gwanghwamun, Seoul</div>
+      <div class="card-note">Famous for daeji gukbap (pork bone rice soup) and mandu. Classic no-frills Korean comfort food.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Beli 10/10 — Fine Dining</div>
+      <div class="card-name">Escondido</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Mexican fine dining in Seoul — a perfect 10/10 on Beli. Mole verde, al pastor taco, truffle chilaquiles, aguachile verde.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Beli 9.5/10 — Korean BBQ</div>
+      <div class="card-name">Myongwolgwan (명월관)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Galbi BBQ with mushroom tea, bibimnaengmyeon, banchan. A high-end traditional Korean BBQ experience.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWb8bM4EZth/" target="_blank">▶ View reel (@allegrasbeli)</a></div>
+    </div>
+
+    <!-- Standalone reels -->
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Sinnonhyeon/Gangnam — KBBQ</div>
+      <div class="card-name">제주화로집 (Jeju Hwaro Jip)</div>
+      <div class="card-location">📍 신논현역 3번출구, 강남구 강남대로118길 26 1F</div>
+      <div class="card-note">All-you-can-eat Jeju thick pork belly (뚱삼겹) for only 18,900₩ (~$13). Also unlimited: yangnyeom galbi, kkeoptegi, moksal. Open until 4am!</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWTd5eEonPT/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Sinchon & Bangi — Chicken</div>
+      <div class="card-name">삼덕통닭 (Samduk Tongdak)</div>
+      <div class="card-location">📍 신촌점 & 방이점, Seoul</div>
+      <div class="card-note">Viral "potato chicken" — crispy outside, moist inside, coated in potato. Went massively viral. Go early — sells out fast.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWLpTO-E2-F/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Yeoksam/Gangnam — KBBQ</div>
+      <div class="card-name">산장 장작구이 (Sanjang Jangjakgui)</div>
+      <div class="card-location">📍 서울 강남구 봉은사로30길 70 1F (near 역삼역)</div>
+      <div class="card-note">Mountain-cabin themed oak wood-fired black pork BBQ. Oil drips away, leaving deep smokey flavour. Heuksam (껍데기) skin is the star. Mon–Sat 11–23:00.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVV0w7ukw6p/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Konkuk — All-You-Can-Eat</div>
+      <div class="card-name">Crazy Lamb (크레이지램) 건대점</div>
+      <div class="card-location">📍 Konkuk University area, Seoul</div>
+      <div class="card-note">Unlimited lamb skewers + tteokbokki + ramen for ~$13. Crazy value. Note: check recent Kakao Maps reviews before going as quality can vary.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWbjDhwj9Qe/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seocho/Gangnam — KBBQ</div>
+      <div class="card-name">BBQ YUL</div>
+      <div class="card-location">📍 1330-14 Seocho-dong, Seocho-gu, Seoul</div>
+      <div class="card-note">Highly praised Korean BBQ spot in the Gangnam area. A regular goes back repeatedly and calls it a must.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DFF7NavyJ9f/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Anguk/Bukchon — Tacos</div>
+      <div class="card-name">더타코부스 NYC (The Taco Booth NYC) 안국점</div>
+      <div class="card-location">📍 서울 종로구 북촌로 6-3 1F (near 안국역)</div>
+      <div class="card-note">One of Seoul's top 4 taco spots (featured on Master of Living TV). Slow-cooked 8-hour birria tacos in a Hanok courtyard. Also: all-meat fajita, quesadilla, poke. 11:30–23:00.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVgCNVTDxP2/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Fine Dining</div>
+      <div class="card-name">Iter (@official_iter)</div>
+      <div class="card-location">📍 Seoul (heart of the city)</div>
+      <div class="card-note">Korean-Italian affordable fine dining. Michelin Guide for 4 consecutive years (2023–2026). From only $35 USD per person. Pasta, truffle dishes — stunning value.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVxS8YcCW4u/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Hanwoo Beef</div>
+      <div class="card-name">우목 Wumok (@wumok_beef)</div>
+      <div class="card-location">📍 Seoul (book via Catch Table app)</div>
+      <div class="card-note">"Best meal of the trip" — exclusive Hanwoo beef that can ONLY be eaten in Korea (not exported). ~100,000₩ ($68) pp. Reserve on Catch Table. Many chefs speak English.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DULQJLwDX7A/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Incheon — Chicken</div>
+      <div class="card-name">가마꿉 인천당하본점 (Gamaggup)</div>
+      <div class="card-location">📍 인천 서구 청마로167번안길 당하제 1F</div>
+      <div class="card-note">Pot-roasted (not fried!) chicken — crispy skin, incredibly juicy inside. Featured on Korean TV. Spicy marinated version + mozzarella cheese topping recommended. Worth the trip to Incheon.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVccCbyAXe7/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Chicken</div>
+      <div class="card-name">Tasty Chicken</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Self-bar style Korean chicken restaurant. Loved by expat visitors — "one of the places when in Seoul that cannot be missed."</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DSfH-oFjkIT/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- NEW — from second batch of reels -->
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Gangnam — KBBQ <span class="new-badge">NEW</span></div>
+      <div class="card-name">제주루프탑흑돼지 (Jeju Rooftop Black Pig BBQ)</div>
+      <div class="card-location">📍 34 Eonju-ro 170-gil, Apgujung Rodeo, Gangnam, Seoul</div>
+      <div class="card-note">Rooftop Jeju black pig BBQ in the heart of Gangnam's Apgujung Rodeo district. ~32,000₩ per person. Great views + premium Jeju pork.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DK93hXwzG54/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Gangnam — Mexican <span class="new-badge">NEW</span></div>
+      <div class="card-name">Mexi Tiger (멕시타이거)</div>
+      <div class="card-location">📍 서울 강남구 테헤란로1길 42, Gangnam</div>
+      <div class="card-note">Mexican restaurant right in Gangnam. Daily 17:00–01:00. Great for a late-night dinner with a totally different vibe.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLPi5l7yIKn/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Hongdae — Korean Pub <span class="new-badge">NEW</span></div>
+      <div class="card-name">조선시대 (Joseon Dynasty)</div>
+      <div class="card-location">📍 B1F, 44, Hongik-ro 3-gil, Mapo-gu, Seoul (Hongdae)</div>
+      <div class="card-note">Immersive Joseon-era themed Korean pub. Press a book on a shelf to open the secret door. Korean classics: cheese kimchi pancake, shrimp scallion pancake, nakgopsae (spicy octopus), fruit makgeolli. Try on hanbok, play games. Sun–Thu 16:30–03:00 / Fri–Sat 16:30–04:00.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DNFiSuaOg7i/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Gangnam — Cocktail Bar <span class="new-badge">NEW</span></div>
+      <div class="card-name">챕터쓰리 (Chapter Three)</div>
+      <div class="card-location">📍 406, Apgujeong-ro, Gangnam-gu, Seoul (Cheongdam-dong)</div>
+      <div class="card-note">Cheongdam-dong's first library-themed secret cocktail bar. Press a book on the wall to enter. Harry Potter-esque vibe — shelves of books, story-inspired cocktails. Charcuterie, fries, nachos. Daily 08:00–03:00.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DO-nQsjD2JW/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Hongdae — Korean Comfort <span class="new-badge">NEW</span></div>
+      <div class="card-name">옹시미 (Ongsimi)</div>
+      <div class="card-location">📍 204-34 Donggyo-dong, Mapo-gu, Seoul (near Hongdae Station)</div>
+      <div class="card-note">Traditional ongshimi — soft, chewy potato balls in a comforting warm broth. Order Ongshimi Kalguksu (10,000₩) + buckwheat flat dumplings (메밀전병, 10,000₩). Unlimited barley rice + radish kimchi included. Expect a short wait — Koreans eat fast!</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DQzYceTCdIy/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Sokcho — Grilled Fish <span class="new-badge">NEW</span></div>
+      <div class="card-name">바담생선구이 (Badam Fish Grill)</div>
+      <div class="card-location">📍 2nd floor with views of Sokcho Eye, Sokcho, Gangwon-do</div>
+      <div class="card-note">Local grilled fish spot with stunning views of the Sokcho Eye Ferris wheel and coastline. Perfect for a meal while exploring Sokcho. (Use Naver Maps: 바담생선구이)</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DSFOtNtk89P/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- Korean Fried Chicken Chains — wide card -->
+    <div class="card wide-card">
+      <div class="card-type">🍗 Korean Fried Chicken Chains — Top 5 Recommended <span class="new-badge">NEW</span></div>
+      <div class="card-name">Must-Try Chimaek Brands in Korea</div>
+      <div class="card-location">📍 Multiple locations across Korea (search each brand on Naver Maps or Kakao Maps)</div>
+      <div class="card-note">These are the top 5 Korean fried chicken chains that locals actually recommend. Available nationwide — order delivery or dine-in.</div>
+      <div class="tag-grid">
+        <div><div class="tag tag-restaurant">Gcova (지코바)</div><span class="tag-area">Yangnyeom Roasted Chicken · best with rice (치밥)</span></div>
+        <div><div class="tag tag-restaurant">BHC 뿌링클</div><span class="tag-area">Bburinkle Chicken · sweet, cheesy, creamy dip</span></div>
+        <div><div class="tag tag-restaurant">Cheogajip (처갓집)</div><span class="tag-area">Seasoned Supreme · sweet, spicy + mayo</span></div>
+        <div><div class="tag tag-restaurant">Goobne (굽네)</div><span class="tag-area">Chili Pepper Crunch · oven-baked, spicy</span></div>
+        <div><div class="tag tag-restaurant">Puradak (푸라닭)</div><span class="tag-area">Black Aglio Chicken · rich soy-garlic, crispy</span></div>
+      </div>
+      <div class="card-reel" style="margin-top:16px"><a href="https://www.instagram.com/p/DQwkXD9kwv4/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- NEW — from third batch of reels -->
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Michelin · Chinese Noodles <span class="new-badge">NEW</span></div>
+      <div class="card-name">Niuroumianguan (牛肉面馆)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Michelin-listed Chinese beef noodle restaurant in Seoul. Must-order: beef noodle special bowl, cucumber salad, fish-flavored eggplant, fried black pork. Affordable Michelin dining.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRn6SnYES3y/" target="_blank">▶ View reel (@lyd.ygm)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Seoul — Gukbap (Rice Soup) <span class="new-badge">NEW</span></div>
+      <div class="card-name">남매국밥 (Nam Mae Gukbap)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">"Favorite meal I had in Seoul" — so good the owner offered a free bowl to one regular who ate it too fast. The restaurant's own account replied to confirm. A beloved Seoul gukbap (rice soup) spot.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVY43fajGez/" target="_blank">▶ View reel (@eyecharlene)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Mangwon — Street Food <span class="new-badge">NEW</span></div>
+      <div class="card-name">우이락 (Uirak) @ Mangwon Market</div>
+      <div class="card-location">📍 Mangwon Market (망원시장), Seoul</div>
+      <div class="card-note">GIANT fried stuffed peppers — a viral street food stall at Mangwon Market. Queues form fast. The stuffed & fried peppers are a must if you're exploring the Mangwon-dong area.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DTcg_r3CQYo/" target="_blank">▶ View reel (@bynessa_)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Ikseon-dong — Pasta <span class="new-badge">NEW</span></div>
+      <div class="card-name">익선취향 (Ikseon Chwihyang)</div>
+      <div class="card-location">📍 17-32 Supyo-ro 28-gil, Jongno District, Seoul (Ikseon-dong)</div>
+      <div class="card-note">Tiny restaurant (~20–25 seats) with only 6 menu items — the queue moves fast. Don't miss the rose pasta and vongole. Omurice is also very good. Go earlier to beat the crowd.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLNIGatSTn7/" target="_blank">▶ View reel (@hey.itsmechie)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-restaurant">Restaurant · Namdaemun — Street Food <span class="new-badge">NEW</span></div>
+      <div class="card-name">Hotteok Namdaemun Vegetable (남대문 채소 호떡)</div>
+      <div class="card-location">📍 12 Namdaemun-ro, Jung District, Seoul (Namdaemun Market)</div>
+      <div class="card-note">Locals swear this is the best hotteok in Seoul — always a line, worth the wait. Order the glass noodle vegetable hotteok (not red bean, not sweet). A Namdaemun Market institution, beloved by locals for generations.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DR_4wXMk6E-/" target="_blank">▶ View reel (@elysnapshot)</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ CAFES -->
+<div class="section">
+  <div class="section-header">
+    <span>☕</span>
+    <h2>Cafés & Bakeries</h2>
+    <span class="badge">36</span>
+  </div>
+  <div class="cards">
+
+    <!-- Original batch -->
+    <div class="card">
+      <div class="card-type type-cafe">Café / Bakery · Ikseondong, Seoul</div>
+      <div class="card-name">Rain Report Rainbow</div>
+      <div class="card-location">📍 Ikseondong (익선동), Jongno-gu, Seoul</div>
+      <div class="card-note">Weather-themed Hanok-style café with moody, rain-inspired aesthetic. Known for weather-themed printed lattes and crafted desserts. Must-visit on a misty Seoul day.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRo379ACd87/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Ikseondong, Seoul — Bakery</div>
+      <div class="card-name">Soha Salt Pond</div>
+      <div class="card-location">📍 166-45 Ikseon-dong, Jongno-gu, Seoul</div>
+      <div class="card-note">A favourite spot in the charming Ikseondong neighbourhood. Beautiful breads, pastries, and treats. "One of my favourite spots!"</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DSxMJThkZ23/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Gangdong-gu, Seoul — Dessert</div>
+      <div class="card-name">Summer Runner (썸머러너)</div>
+      <div class="card-location">📍 989 Cheonho-daero, Gangdong-gu, Seoul</div>
+      <div class="card-note">Viral Pokémon character puddings — Ditto pudding (blueberry, bouncy & purple), Capybara, Rabbit. Dense texture with blueberry compote. Mon–Sat 11:30–21:00, Sun –20:00, closed Tues.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DTxd4RWkQ0c/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café / Bakery — Fruit Desserts</div>
+      <div class="card-name">Rafre Fruit (@rafre_fruit)</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">If you're a fan of fruit-forward desserts, this is the spot. Highly recommended by a Beli Top 900 user.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVe7F8Dkwai/" target="_blank">▶ View reel (@annachaannn)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café / Bakery · Seoul</div>
+      <div class="card-name">Artist Bakery</div>
+      <div class="card-location">📍 Seoul</div>
+      <div class="card-note">Called a "must-visit salt bread bakery in Seoul." Signature matcha croissants and savoury salt bread.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DTfXxq-EZu6/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café / Bakery · Korea-wide</div>
+      <div class="card-name">Dunkin' Wonders (던킨 원더스)</div>
+      <div class="card-location">📍 Multiple locations across Korea</div>
+      <div class="card-note">Korea's luxury Dunkin' concept store — extravagant doughnuts and pastries in a beautifully designed space. "The most luxurious Dunkin' in the world."</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DTgioeOjuot/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Daejeon</div>
+      <div class="card-name">성심당 (Sungsimdang)</div>
+      <div class="card-location">📍 Daejeon (also a smaller counter at KTX station)</div>
+      <div class="card-note">The most famous bakery in Korea — open since 1956, now the most profitable single bakery in the country. Worth a day trip to Daejeon! Best strawberry cake. Lines can be very long.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DUZ4wN5Etw7/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- NEW — from second batch -->
+    <div class="card">
+      <div class="card-type type-cafe">Café · Gimhae — Hanok <span class="new-badge">NEW</span></div>
+      <div class="card-name">명월 (Myeongwol)</div>
+      <div class="card-location">📍 경남 김해시 왕릉길 40, Gimhae, South Gyeongsang Province</div>
+      <div class="card-note">Stunning traditional Hanok café in Gimhae (near Busan). Beautiful traditional Korean architecture inside. Daily 11:00–22:00. Perfect if you're doing a day trip near Busan.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DKwWOL_RRtK/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Jongno-gu — Vintage <span class="new-badge">NEW</span></div>
+      <div class="card-name">NAK-WON Station Cafe (낙원역)</div>
+      <div class="card-location">📍 33-5, Supyo-ro 28-gil, Jongno-gu, Seoul</div>
+      <div class="card-note">A nostalgic vibe inside a converted old train station — vintage interiors, quiet mood, and photogenic corners. Must-try: signature milk tea & retro desserts.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLwzV5Hts1q/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Gangnam — Gallery-Style <span class="new-badge">NEW</span></div>
+      <div class="card-name">NUDAKE (누데이크)</div>
+      <div class="card-location">📍 50, Apgujeong-ro 46-gil, Gangnam-gu, Seoul</div>
+      <div class="card-note">Gallery-style café blending art, coffee, and Seoul minimalism in trendy Gangnam. Try their curated seasonal cakes and hand-drip coffee.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLwzV5Hts1q/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Seodaemun — Waterfall <span class="new-badge">NEW</span></div>
+      <div class="card-name">Cafe Pokpo (카페폭포)</div>
+      <div class="card-location">📍 262-24, Yeonhui-ro, Seodaemun-gu, Seoul</div>
+      <div class="card-note">A REAL waterfall right next to the café — incredible setting for rainy days or solo journaling. 1 drink minimum per person.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLwzV5Hts1q/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Eunpyeong-gu — Quiet <span class="new-badge">NEW</span></div>
+      <div class="card-name">1인1잔 (One Person, One Drink)</div>
+      <div class="card-location">📍 534, Yeonseo-ro, Eunpyeong-gu, Seoul</div>
+      <div class="card-note">A calm, rule-based café — every guest must order at least 1 drink. Cozy and quiet atmosphere. Try their traditional ssanghwa-cha or creamy lattes.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DLwzV5Hts1q/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Gwangmyeong — Cave <span class="new-badge">NEW</span></div>
+      <div class="card-name">광명동굴카페 (Gwangmyeong Cave Café)</div>
+      <div class="card-location">📍 경기 광명시 가학로85번길 134-7, Gwangmyeong (30 min from Seoul)</div>
+      <div class="card-note">A real café inside a massive 7.8km underground cave — once a gold mine from the 1900s, 275m deep underground. Stays cool even in summer! 09:00–18:00 (closed Mon). Americano 5,000₩ + entrance 10,000₩.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DNSeDKYRC4Q/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Yongsan — Dessert <span class="new-badge">NEW</span></div>
+      <div class="card-name">토터스 (Tortoise) @tortoise_haebang</div>
+      <div class="card-location">📍 1F, 81, Sinheung-ro, Yongsan-gu, Seoul (Haebangchon area)</div>
+      <div class="card-note">Serving the cutest mochi soufflé tiramisu — a cloud-soft soufflé topped with a round chewy mochi ball, dusted in cocoa powder. Sinks the moment your fork touches it. 12:00–21:30. Tiramisu Mochi Soufflé Pancake ₩13,000.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DOIFuTvkQqC/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Seongsu — Chocolate <span class="new-badge">NEW</span></div>
+      <div class="card-name">5to7</div>
+      <div class="card-location">📍 668-136 Seongsu-dong 1-ga, Seongdong-gu, Seoul (Seongsu)</div>
+      <div class="card-note">Chocolate dessert spot in trendy Seongsu — black sesame strawberry parfait and speciality chocolate creations. Great for a sweet stop during Seongsu café hopping.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DQReiAxETQz/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Jongno-gu — Korean Style <span class="new-badge">NEW</span></div>
+      <div class="card-name">베이커리아궁 (Bakery Agoong)</div>
+      <div class="card-location">📍 6, Ujeongguk-ro, Jongno-gu, Seoul (next to Bosingak Bell Tower)</div>
+      <div class="card-note">Korean-style bakery café right next to the historic Bosingak bell. Focaccia with duck, gim & pollack roe; Korean hat-shaped financiers; buldak bulgogi croquettes; fried salt bread cooked in a clay furnace (아궁이). Also serves red bean porridge and sujeonggwa. Daily 08:00–21:00.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRUYhg4ktwi/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Dessert Shop · Gangnam — Ice Cream <span class="new-badge">NEW</span></div>
+      <div class="card-name">Baskin Robbins Workshop</div>
+      <div class="card-location">📍 907-54 Dogok-dong, Gangnam District, Seoul</div>
+      <div class="card-note">Baskin Robbins' experimental flagship — staff wear lab coats as "ice cream scientists." AI-developed unique flavors like orange earl grey and green tea earl grey coffee. Totally unique experience.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRjxI2hEtz3/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Sokcho — Street Food <span class="new-badge">NEW</span></div>
+      <div class="card-name">속초 막걸리술빵 (Sokcho Makgeolli Sulbbang)</div>
+      <div class="card-location">📍 471-5 Jungang-dong, Sokcho-si, Gangwon-do (Sokcho Tourist & Fishery Market)</div>
+      <div class="card-note">Traditional steamed bread fermented with makgeolli (rice wine) — incredibly airy, fluffy, and slightly sweet-tangy. Made fresh daily, people queue 30–40 mins. 5,000₩ per slice. If you're doing a Sokcho day trip, this is unmissable.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRtIm9qkea-/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- No-address mentions from DLwzV5Hts1q + DONyGvOE09r rounded up -->
+    <div class="card">
+      <div class="card-type type-cafe">Café · Gyeongbokgung — Pastries <span class="new-badge">NEW</span></div>
+      <div class="card-name">Leedorim</div>
+      <div class="card-location">📍 Near Gyeongbokgung Palace, Seoul (search Naver Maps: 리도림)</div>
+      <div class="card-note">One of a kind café near the palace area — amazing pastries with vegan options available. Pastries reportedly sell out daily so go early.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DONyGvOE09r/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Seoul — Cute Bread <span class="new-badge">NEW</span></div>
+      <div class="card-name">Dalim Bread (달임빵)</div>
+      <div class="card-location">📍 Seoul (search Naver Maps: 달임빵)</div>
+      <div class="card-note">Famous for honey and butter bread combo and super adorable bear-shaped buns. The bread itself is simple but the honey & butter combination is the magic. Very Instagrammable.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DONyGvOE09r/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Seoul — Ghibli-Inspired <span class="new-badge">NEW</span></div>
+      <div class="card-name">Dotori Garden (도토리가든)</div>
+      <div class="card-location">📍 Seoul (search Naver Maps: 도토리가든)</div>
+      <div class="card-note">Studio Ghibli-inspired cozy café — the kind of place you could sit for hours. Famous for honey toast and a magical forest-like atmosphere.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DONyGvOE09r/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Eunpyeong — Hanok Rooftop <span class="new-badge">NEW</span></div>
+      <div class="card-name">Irin Iljan (이린일잔)</div>
+      <div class="card-location">📍 Eunpyeong-gu, Seoul (search Naver Maps: 이린일잔)</div>
+      <div class="card-note">Hanok café in Eunpyeong-gu with the best rooftop views over Bukhansan mountain. Really good food and drinks too — not just about the view. Worth the trek north.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DONyGvOE09r/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Seoul — Multiple Locations <span class="new-badge">NEW</span></div>
+      <div class="card-name">Cafe Onion (카페 어니언)</div>
+      <div class="card-location">📍 Multiple locations: Seongsu, Anguk, Minamdang — Seoul</div>
+      <div class="card-note">Always busy but always worth it — gorgeous industrial spaces in renovated buildings, standout pastries and breads. The Seongsu flagship is iconic.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DONyGvOE09r/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <!-- Best desserts roundup — DPdoktmgKcX -->
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Suwon — Croissant <span class="new-badge">NEW</span></div>
+      <div class="card-name">호작도 (Hojakdo)</div>
+      <div class="card-location">📍 경기 수원시 팔달구 화서문로75번길 7 1층, Suwon</div>
+      <div class="card-note">Acclaimed honey butter croissant. 12:00–19:00 (closed Mon & Tue). No parking — use nearby public lot. A short day trip from Seoul worth making for pastry lovers.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Jongno — Vanilla Cake <span class="new-badge">NEW</span></div>
+      <div class="card-name">발렁스 (Ballangs)</div>
+      <div class="card-location">📍 서울 종로구 계동길 50 2층, Seoul</div>
+      <div class="card-note">Known for a stunning vanilla cream cake. 12:00–19:00 (closed Mon & Tue). In the charming Gyedong-gil neighbourhood near Bukchon.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Mapo — Matcha <span class="new-badge">NEW</span></div>
+      <div class="card-name">비캔드 (Beekend) @beekend.seoul</div>
+      <div class="card-location">📍 서울 마포구 포은로 71-12, Seoul</div>
+      <div class="card-note">Beloved for its matcha French toast. 10:00–18:00 daily. In the Mapo-gu area — a neighbourhood worth exploring for its local café scene.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Gangnam — Croissant <span class="new-badge">NEW</span></div>
+      <div class="card-name">지엠엘 도산 with 오뵈르 (GML Dosan × Obeuvre)</div>
+      <div class="card-location">📍 서울 강남구 언주로164길 38-2 1층, Gangnam (Dosan area)</div>
+      <div class="card-note">Exceptional pain au chocolat croissants. 09:00–22:00. In the upscale Dosan Park neighbourhood — great combination with a stroll around the park.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Café · Mapo — Tarts <span class="new-badge">NEW</span></div>
+      <div class="card-name">과자방 (Gwajabang)</div>
+      <div class="card-location">📍 서울 마포구 큰우물로 16 1층, Seoul (Mapo-gu)</div>
+      <div class="card-note">Coffee vanilla tart that has to be seen to be believed. 11:30–19:00. A hidden gem in the Mapo area, beloved by dessert enthusiasts.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Patisserie · Songpa-gu — Chocolate <span class="new-badge">NEW</span></div>
+      <div class="card-name">오쥬르디파티스리 (Au Jourd'hui Patisserie)</div>
+      <div class="card-location">📍 서울 송파구 백제고분로39길 30-17 101호, Seoul</div>
+      <div class="card-note">Truffle chocolate cake that's worth going out of your way for. 09:00–20:00. In Songpa-gu — pair this visit with Lotte World or Olympic Park nearby.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Busan — Lobster Pastry <span class="new-badge">NEW</span></div>
+      <div class="card-name">무디브레드 마켓 (Moody Bread Market)</div>
+      <div class="card-location">📍 부산 부산진구 전포대로216번길 22, Busan (Jeonpo Café Street)</div>
+      <div class="card-note">Lobster tail pastry and creative breads on Busan's famous Jeonpo Café Street. 11:00–21:00. If you're spending a day in Busan, this area has one of Korea's highest densities of cafés.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Mapo — Matcha Terrine <span class="new-badge">NEW</span></div>
+      <div class="card-name">바이어리셔 (Bayerischer Bakery) @bayerischerbakery</div>
+      <div class="card-location">📍 서울 마포구 망원로1길 22, Seoul (Mangwon-dong)</div>
+      <div class="card-note">Takeout-only bakery in the cool Mangwon neighbourhood known for a delightful matcha terrine. 12:00–18:00. Grab and enjoy at nearby Mangwon Hangang Park.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DPdoktmgKcX/" target="_blank">▶ View reel (@coffeegomi)</a></div>
+    </div>
+
+    <!-- NEW — from third batch of reels -->
+    <div class="card">
+      <div class="card-type type-cafe">Café · Yeonnam-dong — French Toast <span class="new-badge">NEW</span></div>
+      <div class="card-name">Pain Perdu (팽 페르뒤)</div>
+      <div class="card-location">📍 260-2 Yeonnam-dong, Mapo-gu, Seoul</div>
+      <div class="card-note">"The reason I became obsessed with French toast." A small, beloved café in the charming Yeonnam-dong neighbourhood. The café's own account replied to the reel with hearts — the French toast here is legendary.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DVD0mzOER86/" target="_blank">▶ View reel (@_withhelen)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Anguk — Bagels <span class="new-badge">NEW</span></div>
+      <div class="card-name">Bagelland Anguk (베이글랜드 안국)</div>
+      <div class="card-location">📍 144-1 Gye-dong, Jongno-gu, Seoul (Anguk area)</div>
+      <div class="card-note">Beautiful artisan bagels in the Anguk/Bukchon area — gorgeous flavours and presentation. From @_withhelen who is "entering her bagel era." Perfect stop while visiting Gyeongbokgung or Bukchon Hanok Village.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DT-QDWfEQOj/" target="_blank">▶ View reel (@_withhelen)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Hongdae — Salt Bread <span class="new-badge">NEW</span></div>
+      <div class="card-name">자연도소금빵 (Jayeondo Sogeumppang)</div>
+      <div class="card-location">📍 Hongdae, Seoul</div>
+      <div class="card-note">Famous for the original salt bread (소금빵) — the OG Hongdae salt bread spot. Crispy outside, buttery and soft inside. A must if you're in Hongdae and love bread.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DT88Z25j5eU/" target="_blank">▶ View reel (@eats.bysid)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Hongdae — Mugwort <span class="new-badge">NEW</span></div>
+      <div class="card-name">아벡쉐리 (Avek Cheri)</div>
+      <div class="card-location">📍 Hongdae, Seoul</div>
+      <div class="card-note">Unique Korean-French fusion bakery in Hongdae. Signature items: red bean & butter salt bread, mugwort castella, mugwort cream, red bean paste, mugwort rice cake salt bread. A creative and distinctive bakery worth visiting.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DT88Z25j5eU/" target="_blank">▶ View reel (@eats.bysid)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Seochon — Bagels <span class="new-badge">NEW</span></div>
+      <div class="card-name">La Farina Bagels</div>
+      <div class="card-location">📍 Seochon (서촌), Seoul</div>
+      <div class="card-note">Creative artisan bagels in the quiet, historic Seochon neighbourhood. Try the pollock potato bagel, salt bagel with fig cream cheese, and mocha bagel. Seochon is a great slow-walk neighbourhood near Gyeongbokgung.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DT88Z25j5eU/" target="_blank">▶ View reel (@eats.bysid)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-cafe">Bakery · Seoul Station — Tteok & Pastry <span class="new-badge">NEW</span></div>
+      <div class="card-name">한정선 (Han Jung Sun)</div>
+      <div class="card-location">📍 Seoul Station area, Seoul</div>
+      <div class="card-note">Speciality Korean dessert bakery. Must-try: fruit chachapssal-tteok (chewy rice cake with fruit), and the Dubai chocolate version. Convenient location near Seoul Station — easy to grab on the go.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DT88Z25j5eU/" target="_blank">▶ View reel (@eats.bysid)</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ SHOPPING -->
+<div class="section">
+  <div class="section-header">
+    <span>🛍️</span>
+    <h2>Shopping</h2>
+    <span class="badge">5 spots</span>
+  </div>
+  <div class="cards">
+
+    <div class="card">
+      <div class="card-type type-shopping">Shopping · Busan — Department Store</div>
+      <div class="card-name">신세계 센텀시티 (Shinsegae Centum City)</div>
+      <div class="card-location">📍 Centum City, Busan</div>
+      <div class="card-note">The world's largest department store. It's basically a small city: luxury shopping, Spaland spa (best spa in Busan per locals), ice rink, cinema, restaurants, cafés. Easily a full day. Right in Busan — a must if you're visiting.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DWOrU50o-_F/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-shopping">Food Hall · Gangnam — Korea's Largest <span class="new-badge">NEW</span></div>
+      <div class="card-name">신세계 강남 프리미엄 델리 (Shinsegae Gangnam Premium Deli)</div>
+      <div class="card-location">📍 B1F, 176, Sinbanpo-ro, Seocho-gu, Seoul (connected to Goto Mall / Express Bus Terminal)</div>
+      <div class="card-note">Korea's largest food hall at 42,700 sq ft. Features a famous Japanese onigiri shop (1-hour queues in Japan, Korea's first!), chefs from top fine dining programs, plus Singaporean, Thai, Vietnamese, and more. Mon–Thu 10:30–20:00 / Fri–Sun 10:30–20:30.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DN8ItCZkqdi/" target="_blank">▶ View reel</a></div>
+    </div>
+
+    <div class="card wide-card">
+      <div class="card-type type-shopping">Shopping Guide · Seoul — 26 Streetwear & Designer Stores</div>
+      <div class="card-name">Seoul Clothing Stores: Seongsu · Hannam · Hongdae</div>
+      <div class="card-location">📍 Seongsu (성수) · Hannam (한남) · Hongdae (홍대), Seoul</div>
+      <div class="card-note">Elevated streetwear, Korean designers, multibrand shops & flagship concept spaces. Tap any store name to search it.</div>
+      <div class="tag-grid">
+        <div><div class="tag">NOMANUAL</div><span class="tag-area">Flagship</span></div>
+        <div><div class="tag">THREE TO EIGHTY</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">Customellow</div><span class="tag-area">Seongsu Prints</span></div>
+        <div><div class="tag">Blue Elephant</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">RAWROW</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">Rest & Recreation</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">ÅLAND</div><span class="tag-area">Hongdae</span></div>
+        <div><div class="tag">MUSINSA</div><span class="tag-area">Hongdae</span></div>
+        <div><div class="tag">Double Lovers</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">TETO Objet</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">HATCHINGROOM</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">MUSINSA EMPTY</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">Musinsa Standard</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">LOW CLASSIC</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">INSILENCE</div><span class="tag-area">Seongsu Flagship</span></div>
+        <div><div class="tag">thisisneverthat</div><span class="tag-area">Seongsu Flagship</span></div>
+        <div><div class="tag">ODLYWORKSHOP</div><span class="tag-area">Seoul</span></div>
+        <div><div class="tag">Beaker</div><span class="tag-area">Seongsu Flagship</span></div>
+        <div><div class="tag">ACME DE LA VIE</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">NOT4NERD</div><span class="tag-area">Seongsu Flagship</span></div>
+        <div><div class="tag">TREEMINGBIRD</div><span class="tag-area">Seongsu</span></div>
+        <div><div class="tag">Fenek</div><span class="tag-area">Hongdae Showroom</span></div>
+        <div><div class="tag">Citybreeze Seoul</div><span class="tag-area">Hannam Flagship</span></div>
+        <div><div class="tag">Miseki Seoul</div><span class="tag-area">Seoul</span></div>
+        <div><div class="tag">Fucking Awesome Seoul</div><span class="tag-area">Hannam</span></div>
+        <div><div class="tag">Mardi Mercredi</div><span class="tag-area">Hannam</span></div>
+      </div>
+      <div class="card-reel" style="margin-top:16px"><a href="https://www.instagram.com/p/DURGuYlD_mr/" target="_blank">▶ View reel (@elysnapshot)</a></div>
+    </div>
+
+    <!-- NEW — from third batch of reels -->
+    <div class="card">
+      <div class="card-type type-shopping">Shopping · Seoul — Jewellery <span class="new-badge">NEW</span></div>
+      <div class="card-name">Nyu Nyu</div>
+      <div class="card-location">📍 Seoul (Hongdae / Myeongdong / Seongsu area)</div>
+      <div class="card-note">Popular jewellery and earrings store in Seoul — so beloved that one regular specifically stocks up here because their earrings are the only ones that don't cause an allergic reaction. Great for unique Korean accessories.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRDnysngePG/" target="_blank">▶ View reel (@melaurale)</a></div>
+    </div>
+
+    <div class="card">
+      <div class="card-type type-shopping">Shopping · Seoul — Korean Fashion <span class="new-badge">NEW</span></div>
+      <div class="card-name">Jungsaemmool (정샘물) Pop-Up</div>
+      <div class="card-location">📍 Seoul (check their Instagram for current location)</div>
+      <div class="card-note">Korean makeup/beauty designer label pop-up — Jungsaemmool is a cult Korean beauty brand known for its editorial aesthetic. Featured in a Seoul shopping guide alongside Nyu Nyu and eyewear brand Muut.</div>
+      <div class="card-reel"><a href="https://www.instagram.com/p/DRDnysngePG/" target="_blank">▶ View reel (@melaurale)</a></div>
+    </div>
+
+  </div>
+</div>
+
+<p class="summary">All 118 reels scanned · Built by Claude · Click any "View reel" link to watch the original for more detail · 💡 Tip: Use Naver Maps for the best search results in Korea</p>
+
+</body>
+</html>

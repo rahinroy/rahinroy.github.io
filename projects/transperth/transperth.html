@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transperth Live</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" crossorigin=""></script>
+<style>
+  :root {
+    --bg: #0f0f12;
+    --surface: #1c1c22;
+    --border: #2e2e38;
+    --text: #e8e8f0;
+    --text-muted: #8888a0;
+    --accent: #4f9cf9;
+    --live: #34d058;
+    --route-bus: #2a6eff;
+    --route-rail: #ff8c00;
+    --route-ferry: #8b5cf6;
+    --danger: #ff4d4f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  #header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 52px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+
+  #header h1 {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  #header h1::before {
+    content: '';
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 6px var(--live);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  #location-badge {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  #location-badge svg { flex-shrink: 0; }
+
+  /* ── Main layout ── */
+  #main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--border);
+  }
+
+  #sidebar-header {
+    padding: 12px 16px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  #stops-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 12px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #stops-list::-webkit-scrollbar { width: 5px; }
+  #stops-list::-webkit-scrollbar-track { background: transparent; }
+  #stops-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── Map ── */
+  #map {
+    flex: 1;
+    background: #1a1a24;
+  }
+
+  /* ── Stop card ── */
+  .stop-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+
+  .stop-card:hover { border-color: var(--accent); }
+  .stop-card.active { border-color: var(--accent); }
+
+  .stop-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stop-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .stop-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+
+  .stop-dist {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .stop-number {
+    font-size: 10px;
+    color: var(--text-muted);
+    background: var(--border);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-weight: 600;
+    font-family: monospace;
+  }
+
+  /* ── Arrival rows ── */
+  .arrivals-list {
+    padding: 4px 0;
+  }
+
+  .arrival-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    transition: background 0.1s;
+  }
+
+  .arrival-row { cursor: pointer; }
+  .arrival-row:hover { background: rgba(255,255,255,0.03); }
+  .arrival-row.selected { background: rgba(79,156,249,0.10); border-left: 2px solid var(--accent); padding-left: 10px; }
+
+  .route-badge {
+    flex-shrink: 0;
+    width: 42px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+
+  .route-badge.bus { background: var(--route-bus); }
+  .route-badge.rail { background: var(--route-rail); }
+  .route-badge.ferry { background: var(--route-ferry); }
+  .route-badge.school { background: #7c3aed; }
+
+  .arrival-dest {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .arrival-eta {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    min-width: 42px;
+    text-align: right;
+  }
+
+  .arrival-eta.due { color: var(--live); }
+  .arrival-eta.soon { color: #fbbf24; }
+
+  .live-dot {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--live);
+    box-shadow: 0 0 5px var(--live);
+  }
+
+  .live-dot.grey { background: var(--border); box-shadow: none; }
+
+  .arrival-sched {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    flex-shrink: 0;
+  }
+
+  /* ── Loading / empty states ── */
+  .state-msg {
+    padding: 24px 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .state-msg .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 10px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error banner ── */
+  #error-banner {
+    display: none;
+    background: rgba(255,77,79,0.12);
+    border: 1px solid rgba(255,77,79,0.35);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #ff8a8b;
+    margin: 8px 12px 0;
+    line-height: 1.5;
+  }
+
+  #error-banner.visible { display: block; }
+
+  /* ── Refresh indicator ── */
+  #refresh-indicator {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+  }
+
+  #refresh-bar {
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  #refresh-progress {
+    height: 100%;
+    background: var(--accent);
+    width: 100%;
+    transform-origin: left;
+    animation: none;
+  }
+
+  @keyframes countdown {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+  }
+
+  /* ── Mobile layout: bottom sheet ── */
+  @media (max-width: 700px) {
+    #header {
+      height: 44px;
+      padding: 0 12px;
+    }
+
+    #header h1 { font-size: 15px; }
+
+    #main {
+      flex-direction: column;
+      position: relative;
+    }
+
+    #map {
+      flex: 1;
+      min-height: 0;
+      order: -1;
+    }
+
+    #sidebar {
+      width: 100%;
+      border-right: none;
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      background: var(--bg);
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+      max-height: 70dvh;
+      min-height: 52px;
+      transition: max-height 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #sidebar.collapsed {
+      max-height: 52px;
+    }
+
+    #sidebar-header {
+      padding: 0 16px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #sidebar-header::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+    }
+
+    #stops-list {
+      padding: 0 8px 8px;
+      gap: 6px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .stop-card {
+      border-radius: 8px;
+    }
+
+    .stop-header {
+      padding: 8px 10px 6px;
+    }
+
+    .arrival-row {
+      padding: 8px 10px;
+      gap: 8px;
+      min-height: 44px;
+    }
+
+    .route-badge {
+      width: 38px;
+      height: 22px;
+      font-size: 10px;
+    }
+
+    .arrival-dest {
+      font-size: 13px;
+    }
+
+    .arrival-eta {
+      font-size: 14px;
+      min-width: 48px;
+    }
+
+    #refresh-indicator {
+      padding: 8px;
+    }
+
+    #error-banner {
+      margin: 4px 8px 0;
+    }
+
+    /* Adjust map controls to not overlap with sheet */
+    .leaflet-control-zoom {
+      margin-bottom: 60px !important;
+    }
+
+    .leaflet-control-attribution {
+      display: none !important;
+    }
+  }
+
+  /* ── Leaflet dark tweaks ── */
+  .leaflet-container { background: #1a1a24; }
+  .leaflet-control-attribution { background: rgba(15,15,18,0.7) !important; color: #555 !important; }
+  .leaflet-control-attribution a { color: #666 !important; }
+  .leaflet-control-zoom a {
+    background: var(--surface) !important;
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+  }
+  .leaflet-control-zoom a:hover { background: var(--border) !important; }
+
+  .bus-label {
+    background: var(--route-bus);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 5px;
+    border-radius: 5px;
+    border: none;
+    white-space: nowrap;
+  }
+
+  .stop-marker-label {
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 5px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>Transperth Live</h1>
+  <div id="location-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+    <span id="dist-label">Locating…</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div id="sidebar-header">Nearby Stops</div>
+    <div id="error-banner"></div>
+    <div id="stops-list">
+      <div class="state-msg">
+        <div class="spinner"></div>
+        Getting your location…
+      </div>
+    </div>
+    <div id="refresh-indicator">
+      <div id="refresh-bar"><div id="refresh-progress"></div></div>
+      <span id="refresh-label">–</span>
+    </div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+'use strict';
+
+// ─────────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────────
+const GOOGLE_API_KEY       = 'AIzaSyDe5CKFZuApfqaE0I1ZfNSBh0mSB8aHmXo';
+const FIREBASE_PROJECT_ID  = 'transperth-react-native-app';
+const FIREBASE_PROJECT_NUM = '280910470212';
+const FIREBASE_APP_ID      = '1:280910470212:android:06674ada65225784';
+const ANDROID_PKG          = 'au.gov.wa.pta.transperth';
+const APP_VERSION          = '2.12.0';
+const APP_BUILD            = '132056';
+
+const REALTIME_USERNAME = 'PhoneApp';
+const REALTIME_SECRET   = 'TrAnSpErTh';
+const PELIAS_SECRET     = 'Lk9XTaKQQVsAeD2NEhFk/suggest';
+
+const REALTIME_BASE     = 'https://rahinroy-github-io.vercel.app';
+const PELIAS_BASE       = 'https://pelias.transperth.info/web_metro/';
+
+const RC_CACHE_KEY = 'tp_rc_cache';
+const RC_CACHE_TTL = 7 * 24 * 3600 * 1000; // 7 days
+
+const REFRESH_INTERVAL_MS    = 30_000;
+const COUNTDOWN_INTERVAL_MS  = 10_000;
+
+// ─────────────────────────────────────────────────────────────
+// Perth time helpers — always UTC+8, uses Intl API (no offset math)
+// ─────────────────────────────────────────────────────────────
+const _perthFmt = new Intl.DateTimeFormat('en-AU', {
+  timeZone: 'Australia/Perth',
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit',
+  hour12: false,
+});
+
+function _perthParts(d) {
+  const p = {};
+  _perthFmt.formatToParts(d || new Date()).forEach(({ type, value }) => { p[type] = value; });
+  return p;
+}
+
+// Returns Date-like object — use only for ETA arithmetic
+function perthNow() {
+  const p = _perthParts();
+  // Reconstruct as a Date whose local fields read as Perth time
+  return new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}`);
+}
+
+// YYYY-MM-DDTHH:mm  (for SJP Time field)
+function perthNowStr() {
+  const p = _perthParts();
+  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+}
+
+// DDMMYYYYHHmmss  (for realtime auth timestamp — exactly 14 chars)
+function perthDDMMYYYYHHmmss() {
+  const p = _perthParts();
+  return `${p.day}${p.month}${p.year}${p.hour}${p.minute}${p.second}`;
+}
+
+function etaMinutes(timeStr) {
+  // timeStr = HH:mm:ss or HH:mm
+  if (!timeStr) return null;
+  const nowP = perthNow();
+  const parts = timeStr.split(':').map(Number);
+  const eta = new Date(nowP);
+  eta.setHours(parts[0], parts[1], parts[2] || 0, 0);
+  if (eta < nowP) eta.setDate(eta.getDate() + 1);
+  return Math.round((eta - nowP) / 60_000);
+}
+
+function formatEta(mins) {
+  if (mins === null) return '–';
+  if (mins < 1) return 'Due';
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Firebase Remote Config bootstrap (cached 7 days)
+// ─────────────────────────────────────────────────────────────
+async function loadRemoteConfig() {
+  try {
+    const cached = localStorage.getItem(RC_CACHE_KEY);
+    if (cached) {
+      const { ts, entries } = JSON.parse(cached);
+      if (Date.now() - ts < RC_CACHE_TTL) {
+        console.log('[RC] using cache');
+        return entries;
+      }
+    }
+  } catch {}
+
+  console.log('[RC] fetching fresh');
+
+  // Step 1: Create Firebase Installation
+  const fidBytes = crypto.getRandomValues(new Uint8Array(17));
+  let fid = btoa(String.fromCharCode(...fidBytes)).replace(/[+/=]/g, c => ({'+':'-','/':'_','=':''}[c])).slice(0, 22);
+  fid = 'f' + fid.slice(1);
+
+  const installResp = await fetch(
+    `https://firebaseinstallations.googleapis.com/v1/projects/${FIREBASE_PROJECT_ID}/installations`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GOOGLE_API_KEY,
+        'X-Android-Package': ANDROID_PKG,
+        'x-firebase-client': 'fire-android-installations/18.0.0',
+      },
+      body: JSON.stringify({
+        fid,
+        authVersion: 'FIS_v2',
+        appId: FIREBASE_APP_ID,
+        sdkVersion: 'a:18.0.0',
+      }),
+    }
+  );
+
+  if (!installResp.ok) throw new Error(`Firebase install failed: ${installResp.status}`);
+  const installData = await installResp.json();
+  const authToken = installData.authToken.token;
+
+  // Step 2: Fetch Remote Config
+  const rcResp = await fetch(
+    `https://firebaseremoteconfig.googleapis.com/v1/projects/${FIREBASE_PROJECT_NUM}/namespaces/firebase:fetch`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': GOOGLE_API_KEY,
+        'x-goog-firebase-installations-auth': authToken,
+      },
+      body: JSON.stringify({
+        platformVersion: '33',
+        appId: FIREBASE_APP_ID,
+        appInstanceId: fid,
+        appInstanceIdToken: authToken,
+        languageCode: 'en-AU',
+        timeZone: 'Australia/Perth',
+        appBuild: APP_BUILD,
+        appVersion: APP_VERSION,
+        packageName: ANDROID_PKG,
+        sdkVersion: '21.10.0',
+        analyticsUserProperties: {},
+      }),
+    }
+  );
+
+  if (!rcResp.ok) throw new Error(`Remote Config fetch failed: ${rcResp.status}`);
+  const rcData = await rcResp.json();
+  const entries = rcData.entries || {};
+
+  try {
+    localStorage.setItem(RC_CACHE_KEY, JSON.stringify({ ts: Date.now(), entries }));
+  } catch {}
+
+  console.log('[RC] got key:', entries.api_key_realtime);
+  return entries;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Realtime auth header
+// ─────────────────────────────────────────────────────────────
+function sha1Base64(str) {
+  const hash = CryptoJS.SHA1(str);
+  // Convert WordArray to Uint8Array
+  const words = hash.words;
+  const sigBytes = hash.sigBytes;
+  const bytes = [];
+  for (let i = 0; i < sigBytes; i++) {
+    bytes.push((words[i >>> 2] >>> (24 - (i % 4) * 8)) & 0xff);
+  }
+  return btoa(String.fromCharCode(...bytes));
+}
+
+function buildAuthHeaderClean(realtimeKey) {
+  const keyNoDash = realtimeKey.replace(/-/g, '');
+  const ts = perthDDMMYYYYHHmmss();
+  const rand6 = Array.from({length: 6}, () => Math.floor(Math.random() * 10)).join('');
+  const base64Nonce = btoa(`${rand6}-${ts}`);
+  const base64Token = sha1Base64(`${REALTIME_SECRET}-${keyNoDash}-${ts}`);
+  return `Custom Username=${REALTIME_USERNAME},Nonce=${base64Nonce},Token=${base64Token}`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pelias auth URL builder
+// ─────────────────────────────────────────────────────────────
+function peliasUrl(path, params) {
+  const hexTime = Math.round(Date.now() / 1000).toString(16).toUpperCase();
+  const md5 = CryptoJS.MD5(PELIAS_SECRET + hexTime).toString();
+  const base = `${PELIAS_BASE}${md5}/${hexTime}/${path}`;
+  const qs = new URLSearchParams(params).toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+// ─────────────────────────────────────────────────────────────
+// API calls
+// ─────────────────────────────────────────────────────────────
+async function findNearbyStops(lat, lon) {
+  // Pelias /suggest biases results toward focus point but needs a text query.
+  // Strategy: query several 2-digit numeric prefixes that cover Perth stop number
+  // ranges (10xxx–29xxx). Each query returns stops whose labels start with that
+  // prefix, sorted by proximity to the focus point. Aggregate, deduplicate, sort.
+  const PREFIXES = ['10','11','12','13','14','15','20','21','22','23','24','27','28','29'];
+
+  const allStops = [];
+  const seen = new Set();
+
+  for (const prefix of PREFIXES) {
+    try {
+      const url = peliasUrl('suggest', {
+        text: prefix,
+        size: '10',
+        layers: 'stops',
+        'focus.point.lat': lat,
+        'focus.point.lon': lon,
+      });
+      const resp = await fetch(url, { headers: { Accept: 'application/json' } });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+
+      for (const f of data.features || []) {
+        const props = f.properties || {};
+        const label = props.label || '';
+        if (!/^\d{5}\s/.test(label)) continue;
+
+        // StopUid is the real SilverRail UID (e.g. "PerthRestricted:11762")
+        // properties.id is just the Pelias internal ID and does NOT work with /SJP/Stop
+        const stopUidRaw = props.StopUid || '';
+        const uid = stopUidRaw.replace(/^PerthRestricted:/, '');
+        if (!uid) continue;
+
+        if (seen.has(uid)) continue;
+        seen.add(uid);
+        const [flon, flat] = f.geometry?.coordinates || [lon, lat];
+        const dist = haversineM(lat, lon, flat, flon);
+        if (dist > 800) continue; // ignore stops > 800m away
+        const publicNum = props.Code || (label.match(/^(\d{5})/) || [])[1] || '';
+        const modes = (props.SupportedModes || '').toLowerCase();
+        allStops.push({
+          uid,
+          publicNumber: publicNum,
+          name: props.Description || label.replace(/^\d{5}\s*/, '').trim(),
+          lat: flat,
+          lon: flon,
+          dist,
+          modes,
+          source: 'pelias',
+        });
+      }
+    } catch {}
+  }
+
+  if (allStops.length === 0) throw new Error('No nearby stops found via Pelias');
+
+  allStops.sort((a, b) => a.dist - b.dist);
+  return allStops.slice(0, 8);
+}
+
+async function getArrivals(stopUid, realtimeKey) {
+  const path = state.realtimeStopPath || '/SJP/Stop';
+  const resp = await fetch(`${REALTIME_BASE}/api/proxy?p=${encodeURIComponent(path)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: buildAuthHeaderClean(realtimeKey),
+    },
+    body: JSON.stringify({
+      StopUid: String(stopUid),
+      Time: perthNowStr(),
+      TransportModes: 'Bus;School Bus;Rail;Ferry',
+      ReturnNotes: true,
+      IsRealTimeChecked: true,
+    }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`${path} ${resp.status}: ${text.slice(0, 200)}`);
+  }
+
+  return resp.json();
+}
+
+async function getTrip(tripUid, tripDate) {
+  const path = '/SJP/Trip';
+  const resp = await fetch(`${REALTIME_BASE}/api/proxy?p=${encodeURIComponent(path)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: buildAuthHeaderClean(state.realtimeKey),
+    },
+    body: JSON.stringify({
+      TripUid: String(tripUid),
+      TripDate: tripDate,
+      IsRealTimeChecked: true,
+      ReturnNotes: true,
+      IsMappingDataReturned: true,
+    }),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`${path} ${resp.status}: ${text.slice(0, 200)}`);
+  }
+
+  return resp.json();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Google encoded polyline decoder
+// ─────────────────────────────────────────────────────────────
+function decodeGooglePolyline(encoded) {
+  const points = [];
+  let index = 0, lat = 0, lng = 0;
+  while (index < encoded.length) {
+    let shift = 0, result = 0, byte;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    shift = 0; result = 0;
+    do {
+      byte = encoded.charCodeAt(index++) - 63;
+      result |= (byte & 0x1f) << shift;
+      shift += 5;
+    } while (byte >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+
+    points.push([lat / 1e5, lng / 1e5]);
+  }
+  return points;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Route overlay management
+// ─────────────────────────────────────────────────────────────
+function clearRouteOverlay() {
+  if (!state.activeRoute) return;
+  if (state.activeRoute.polyline) map.removeLayer(state.activeRoute.polyline);
+  (state.activeRoute.stopMarkers || []).forEach(m => map.removeLayer(m));
+  state.activeRoute = null;
+}
+
+async function showRouteOnMap(tripUid, tripDate) {
+  // Toggle off if same trip
+  if (state.activeRoute && state.activeRoute.tripUid === tripUid) {
+    clearRouteOverlay();
+    renderStops();
+    return;
+  }
+
+  clearRouteOverlay();
+
+  let tripData;
+  try {
+    tripData = await getTrip(tripUid, tripDate);
+  } catch (err) {
+    console.error('[trip]', err);
+    showError(`Trip detail error: ${err.message}`);
+    return;
+  }
+
+  console.log('[trip] response:', tripData);
+
+  const summary = tripData.Summary || {};
+  const polylineStr = summary.Polyline || '';
+  const tripStops = tripData.TripStops || [];
+
+  // Determine route color from mode
+  const mode = summary.Mode || 'Bus';
+  const routeColor = mode === 'Rail' ? '#ff8c00' : mode === 'Ferry' ? '#8b5cf6' : '#2a6eff';
+
+  // Parse polyline — try Google encoded format first, fall back to coordinate pairs
+  let coords = [];
+  if (polylineStr) {
+    if (/^[A-Za-z0-9_~@?\\{}|`^[\]]+$/.test(polylineStr) && !polylineStr.includes(',')) {
+      // Google encoded polyline
+      coords = decodeGooglePolyline(polylineStr);
+    } else if (polylineStr.includes(',')) {
+      // Semicolon or space-separated "lat,lon" pairs
+      const pairs = polylineStr.split(/[;\s]+/);
+      for (const pair of pairs) {
+        const [a, b] = pair.split(',').map(Number);
+        if (!isNaN(a) && !isNaN(b)) coords.push([a, b]);
+      }
+    }
+  }
+
+  // If no polyline data, try to build a line from stop positions
+  if (coords.length === 0) {
+    for (const ts of tripStops) {
+      const pos = ts.TransitStop?.Position;
+      if (pos) {
+        const [a, b] = pos.split(',').map(s => parseFloat(s.trim()));
+        if (!isNaN(a) && !isNaN(b)) coords.push([a, b]);
+      }
+    }
+  }
+
+  const markers = [];
+
+  // Draw polyline
+  let polylineLayer = null;
+  if (coords.length >= 2) {
+    polylineLayer = L.polyline(coords, {
+      color: routeColor,
+      weight: 4,
+      opacity: 0.75,
+    }).addTo(map);
+  }
+
+  // Draw stop dots
+  for (const ts of tripStops) {
+    const pos = ts.TransitStop?.Position;
+    if (!pos) continue;
+    const [sLat, sLon] = pos.split(',').map(s => parseFloat(s.trim()));
+    if (isNaN(sLat) || isNaN(sLon)) continue;
+
+    const rtInfo = ts.RealTimeInfo || {};
+    const status = rtInfo.RealTimeTripStatus; // 3=passed, 1=upcoming
+    const isPassed = status === 3;
+
+    const stopName = ts.TransitStop?.Description || '';
+    const etaStr = ts.DepartureTime ? ts.DepartureTime.slice(11, 16) : (ts.ArrivalTime ? ts.ArrivalTime.slice(11, 16) : '');
+    const tooltipText = etaStr ? `${stopName} — ${etaStr}` : stopName;
+
+    const marker = L.circleMarker([sLat, sLon], {
+      radius: 5,
+      color: isPassed ? '#666' : routeColor,
+      fillColor: isPassed ? '#444' : '#fff',
+      fillOpacity: 1,
+      weight: 2,
+    })
+      .bindTooltip(tooltipText, { direction: 'top', className: 'stop-marker-label' })
+      .addTo(map);
+    markers.push(marker);
+  }
+
+  state.activeRoute = { polyline: polylineLayer, stopMarkers: markers, tripUid };
+
+  // Fit map to route
+  if (polylineLayer) {
+    map.fitBounds(polylineLayer.getBounds().pad(0.1));
+  } else if (markers.length > 0) {
+    const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+    map.fitBounds(bounds.pad(0.1));
+  }
+
+  renderStops();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Utility: haversine distance in metres
+// ─────────────────────────────────────────────────────────────
+function haversineM(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 +
+            Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function fmtDist(m) {
+  if (m < 1000) return `${Math.round(m)}m`;
+  return `${(m/1000).toFixed(1)}km`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// App state
+// ─────────────────────────────────────────────────────────────
+const state = {
+  userLat: null,
+  userLon: null,
+  stops: [],
+  arrivals: {},        // uid → { data, loadedAt }
+  activeStopUid: null,
+  realtimeKey: null,
+  realtimeStopPath: '/SJP/Stop',
+  refreshTimer: null,
+  countdownTimer: null,
+  busMarkers: {},      // uid → leaflet marker
+  stopMarkers: {},     // uid → leaflet marker
+  userMarker: null,
+  activeRoute: null,   // { polyline, stopMarkers, tripUid }
+};
+
+// ─────────────────────────────────────────────────────────────
+// Map setup
+// ─────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true, attributionControl: true })
+  .setView([-31.95, 115.86], 14);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  subdomains: 'abcd',
+  maxZoom: 19,
+  attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+  crossOrigin: true,
+}).addTo(map);
+
+const userIcon = L.divIcon({
+  className: '',
+  html: `<div style="
+    width:16px; height:16px; border-radius:50%;
+    background:#4f9cf9; border:3px solid white;
+    box-shadow:0 0 8px rgba(79,156,249,0.8);
+  "></div>`,
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
+
+function stopIcon(active) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:12px; height:12px; border-radius:50%;
+      background:${active ? '#4f9cf9' : '#444466'};
+      border:2px solid ${active ? 'white' : '#666688'};
+      box-shadow:${active ? '0 0 6px rgba(79,156,249,0.7)' : 'none'};
+    "></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6],
+  });
+}
+
+function busIcon(routeCode, routeName, mode) {
+  const color = mode === 'Rail' ? '#ff8c00' : mode === 'Ferry' ? '#8b5cf6' : '#2a6eff';
+  const label = routeCode || (routeName ? routeName.replace(/\s*Line\s*$/i, '').slice(0, 3).toUpperCase() : '?');
+  return L.divIcon({
+    className: 'bus-label',
+    html: `<div style="
+      background:${color}; color:white; font-size:10px; font-weight:800;
+      padding:2px 5px; border-radius:5px; white-space:nowrap;
+    ">${label}</div>`,
+    iconSize: null,
+    iconAnchor: [14, 10],
+  });
+}
+
+// ─────────────────────────────────────────────────────────────
+// Render
+// ─────────────────────────────────────────────────────────────
+function modeClass(mode) {
+  if (!mode) return 'bus';
+  const m = mode.toLowerCase();
+  if (m.includes('rail') || m.includes('train')) return 'rail';
+  if (m.includes('ferry')) return 'ferry';
+  if (m.includes('school')) return 'school';
+  return 'bus';
+}
+
+function renderStops() {
+  const list = document.getElementById('stops-list');
+  if (state.stops.length === 0) {
+    list.innerHTML = '<div class="state-msg"><span class="icon">🚏</span>No stops found nearby.</div>';
+    return;
+  }
+
+  // Auto-expand bottom sheet on mobile when data arrives
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('collapsed') && Object.keys(state.arrivals).length > 0) {
+    sidebar.classList.remove('collapsed');
+    setTimeout(() => map.invalidateSize(), 350);
+  }
+
+  list.innerHTML = '';
+  state.stops.forEach(stop => {
+    const isActive = stop.uid === state.activeStopUid;
+    const arr = state.arrivals[stop.uid];
+    const card = document.createElement('div');
+    card.className = 'stop-card' + (isActive ? ' active' : '');
+    card.dataset.uid = stop.uid;
+
+    const trips = arr?.data?.Trips || [];
+    const rows = trips.slice(0, 8).map(trip => renderArrivalRow(trip)).filter(r => r !== '');
+    const arrivalHTML = !arr
+      ? `<div class="state-msg" style="padding:10px 12px;text-align:left;font-size:12px;"><span class="spinner" style="width:18px;height:18px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px;"></span>Loading…</div>`
+      : rows.length === 0
+        ? `<div class="state-msg" style="padding:10px 12px;text-align:left;font-size:12px;">No services in the next 2 hours</div>`
+        : `<div class="arrivals-list">${rows.slice(0, 5).join('')}</div>`;
+
+    card.innerHTML = `
+      <div class="stop-header">
+        <span class="stop-name">${escHtml(stop.name || 'Stop')}</span>
+        <div class="stop-meta">
+          ${stop.publicNumber ? `<span class="stop-number">${stop.publicNumber}</span>` : ''}
+          <span class="stop-dist">${fmtDist(stop.dist)}</span>
+        </div>
+      </div>
+      ${arrivalHTML}
+    `;
+
+    card.addEventListener('click', () => selectStop(stop.uid));
+
+    // Arrival row click → show route on map
+    card.querySelectorAll('.arrival-row[data-trip-uid]').forEach(row => {
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const tripUid = row.dataset.tripUid;
+        const tripDate = row.dataset.tripDate;
+        if (tripUid) showRouteOnMap(tripUid, tripDate);
+      });
+    });
+
+    list.appendChild(card);
+  });
+}
+
+function renderArrivalRow(trip) {
+  const sm = trip.Summary || {};
+  const rt = trip.RealTimeInfo || {};
+  const smRt = sm.RealTimeInfo || null;
+
+  const mode = sm.Mode || 'Bus';
+  // Rail trips have empty RouteCode — fall back to abbreviated RouteName
+  const route = sm.RouteCode ||
+    (sm.RouteName ? sm.RouteName.replace(/\s*Line\s*$/i, '').slice(0, 3).toUpperCase() : '?');
+  const headsign = sm.Headsign || '';
+
+  // Prefer live EstimatedArrivalTime (HH:mm:ss, Perth today)
+  // Fall back to scheduled ArriveTime (full Perth datetime "YYYY-MM-DDTHH:mm")
+  let mins = null;
+  const estTime = rt.EstimatedArrivalTime;
+  if (estTime) {
+    mins = etaMinutes(estTime);
+  } else if (trip.ArriveTime) {
+    // ArriveTime is a local datetime string — compare against perthNow() directly
+    mins = Math.round((new Date(trip.ArriveTime) - perthNow()) / 60_000);
+  }
+
+  // Skip trips that departed more than 1 minute ago
+  if (mins !== null && mins < -1) return '';
+
+  const isLive = !!smRt;
+
+  let etaClass = '';
+  if (mins !== null) {
+    if (mins < 1) etaClass = 'due';
+    else if (mins <= 5) etaClass = 'soon';
+  }
+
+  const etaDisplay = mins !== null ? formatEta(mins) : '–';
+
+  // Show strikethrough scheduled time if live ETA differs by >2 min from schedule
+  const schedTime = trip.ArriveTime ? trip.ArriveTime.slice(11, 16) : null;
+  const schedMins = schedTime ? Math.round((new Date(trip.ArriveTime) - perthNow()) / 60_000) : null;
+  const showSched = estTime && schedMins !== null && Math.abs(mins - schedMins) > 2;
+
+  const tripUid = sm.TripUid || '';
+  const tripDate = trip.DepartureTime || trip.ArriveTime || perthNowStr();
+  const isSelected = state.activeRoute && state.activeRoute.tripUid === tripUid;
+
+  return `
+    <div class="arrival-row${isSelected ? ' selected' : ''}" data-trip-uid="${escHtml(tripUid)}" data-trip-date="${escHtml(tripDate)}">
+      <div class="route-badge ${modeClass(mode)}">${escHtml(route)}</div>
+      <div class="arrival-dest">${escHtml(headsign)}</div>
+      ${showSched ? `<div class="arrival-sched">${schedTime}</div>` : ''}
+      <div class="arrival-eta ${etaClass}">${etaDisplay}</div>
+      <div class="live-dot ${isLive ? '' : 'grey'}"></div>
+    </div>
+  `;
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function updateMapMarkers() {
+  // User marker
+  if (state.userLat !== null) {
+    if (!state.userMarker) {
+      state.userMarker = L.marker([state.userLat, state.userLon], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+    } else {
+      state.userMarker.setLatLng([state.userLat, state.userLon]);
+    }
+  }
+
+  // Stop markers
+  const existingUids = new Set(Object.keys(state.stopMarkers));
+  state.stops.forEach(stop => {
+    const isActive = stop.uid === state.activeStopUid;
+    if (state.stopMarkers[stop.uid]) {
+      state.stopMarkers[stop.uid].setIcon(stopIcon(isActive));
+    } else {
+      const marker = L.marker([stop.lat, stop.lon], { icon: stopIcon(isActive) })
+        .bindTooltip(stop.name, { className: 'stop-marker-label', direction: 'top', permanent: false })
+        .addTo(map);
+      marker.on('click', () => selectStop(stop.uid));
+      state.stopMarkers[stop.uid] = marker;
+    }
+    existingUids.delete(stop.uid);
+  });
+
+  // Remove stale stop markers
+  existingUids.forEach(uid => {
+    if (state.stopMarkers[uid]) {
+      map.removeLayer(state.stopMarkers[uid]);
+      delete state.stopMarkers[uid];
+    }
+  });
+
+  // Bus position markers
+  const liveBusUids = new Set();
+  Object.values(state.arrivals).forEach(({ data }) => {
+    if (!data?.Trips) return;
+    data.Trips.forEach(trip => {
+      const sm = trip.Summary || {};
+      const smRt = sm.RealTimeInfo;
+      if (!smRt?.CurrentPosition) return;
+      const posStr = smRt.CurrentPosition;
+      const parts = posStr.trim().split(/\s+/);
+      if (parts.length < 2) return;
+      const blat = parseFloat(parts[0]);
+      const blon = parseFloat(parts[1]);
+      if (isNaN(blat) || isNaN(blon)) return;
+      const key = sm.TripUid || posStr;
+      liveBusUids.add(key);
+      if (state.busMarkers[key]) {
+        state.busMarkers[key].setLatLng([blat, blon]);
+      } else {
+        const icon = busIcon(sm.RouteCode, sm.RouteName, sm.Mode);
+        const marker = L.marker([blat, blon], { icon, zIndexOffset: 500 })
+          .bindTooltip(`Route ${sm.RouteCode} → ${sm.Headsign}`, { direction: 'top' })
+          .addTo(map);
+        state.busMarkers[key] = marker;
+      }
+    });
+  });
+
+  // Remove stale bus markers
+  Object.keys(state.busMarkers).forEach(key => {
+    if (!liveBusUids.has(key)) {
+      map.removeLayer(state.busMarkers[key]);
+      delete state.busMarkers[key];
+    }
+  });
+}
+
+function showError(msg) {
+  const banner = document.getElementById('error-banner');
+  banner.textContent = msg;
+  banner.classList.add('visible');
+}
+
+function clearError() {
+  document.getElementById('error-banner').classList.remove('visible');
+}
+
+function setDistLabel(text) {
+  document.getElementById('dist-label').textContent = text;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Stop selection
+// ─────────────────────────────────────────────────────────────
+function selectStop(uid) {
+  state.activeStopUid = uid;
+  const stop = state.stops.find(s => s.uid === uid);
+  if (stop) {
+    map.panTo([stop.lat, stop.lon], { animate: true });
+    updateMapMarkers();
+  }
+  renderStops();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Arrival refresh
+// ─────────────────────────────────────────────────────────────
+async function refreshAllArrivals() {
+  if (!state.realtimeKey) return;
+
+  for (const stop of state.stops) {
+    try {
+      const data = await getArrivals(stop.uid, state.realtimeKey);
+      state.arrivals[stop.uid] = { data, loadedAt: Date.now() };
+      clearError();
+    } catch (err) {
+      console.error(`[arrivals] stop ${stop.uid}:`, err);
+      const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
+      if (isCors) {
+        showError(
+          `CORS error: realtime.transperth.info blocks browser requests. ` +
+          `Arrivals unavailable — stop data still shown. ` +
+          `A proxy would be needed to resolve this.`
+        );
+      } else {
+        showError(`Arrivals error (${stop.uid}): ${err.message}`);
+      }
+    }
+  }
+
+  renderStops();
+  updateMapMarkers();
+  startRefreshCountdown();
+}
+
+function startRefreshCountdown() {
+  const bar = document.getElementById('refresh-progress');
+  const label = document.getElementById('refresh-label');
+  bar.style.animation = 'none';
+  bar.offsetHeight; // reflow
+  bar.style.animation = `countdown ${REFRESH_INTERVAL_MS / 1000}s linear forwards`;
+  label.textContent = 'Refreshing in 30s';
+}
+
+// ─────────────────────────────────────────────────────────────
+// Main init
+// ─────────────────────────────────────────────────────────────
+async function init() {
+  const list = document.getElementById('stops-list');
+
+  // 1. Get user location
+  let lat, lon;
+  try {
+    ({ lat, lon } = await new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        err => reject(err),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+      );
+    }));
+  } catch (err) {
+    list.innerHTML = `<div class="state-msg">
+      <span class="icon">📍</span>
+      Location access denied or unavailable.<br>
+      <small>${err.message || ''}</small>
+    </div>`;
+    return;
+  }
+
+  state.userLat = lat;
+  state.userLon = lon;
+  map.setView([lat, lon], 15);
+  updateMapMarkers();
+  setDistLabel('Loading stops…');
+
+  list.innerHTML = '<div class="state-msg"><div class="spinner"></div>Finding nearby stops…</div>';
+
+  // 2. Bootstrap Firebase Remote Config
+  let rc;
+  try {
+    rc = await loadRemoteConfig();
+    state.realtimeKey = rc.api_key_realtime;
+    console.log('[boot] realtime key:', state.realtimeKey);
+  } catch (err) {
+    console.error('[boot] RC failed:', err);
+    showError(`Firebase Remote Config failed: ${err.message}. Arrivals unavailable.`);
+    // Continue — we can still show stops without arrivals
+    state.realtimeKey = null;
+  }
+
+  // 3. Find nearby stops
+  try {
+    const stops = await findNearbyStops(lat, lon);
+    stops.sort((a, b) => a.dist - b.dist);
+    state.stops = stops.slice(0, 8);
+
+    if (state.stops.length === 0) throw new Error('No stops returned');
+
+    const nearest = state.stops[0];
+    setDistLabel(`${fmtDist(nearest.dist)} from you`);
+    state.activeStopUid = nearest.uid;
+
+    renderStops();
+    updateMapMarkers();
+
+    // Fit map to show user + nearby stops
+    const bounds = L.latLngBounds([[lat, lon]]);
+    state.stops.forEach(s => bounds.extend([s.lat, s.lon]));
+    map.fitBounds(bounds.pad(0.15));
+
+  } catch (err) {
+    console.error('[stops]', err);
+    list.innerHTML = `<div class="state-msg">
+      <span class="icon">🚌</span>
+      Could not find nearby stops.<br>
+      <small>${err.message}</small>
+    </div>`;
+    setDistLabel('No stops found');
+    return;
+  }
+
+  // 4. Fetch arrivals
+  if (state.realtimeKey) {
+    await refreshAllArrivals();
+
+    // 5. Set up refresh timers
+    state.refreshTimer = setInterval(refreshAllArrivals, REFRESH_INTERVAL_MS);
+
+    // Countdown display update (re-render ETAs every 10s without API call)
+    state.countdownTimer = setInterval(() => {
+      renderStops();
+    }, COUNTDOWN_INTERVAL_MS);
+  } else {
+    list.innerHTML = '<div class="state-msg"><span class="icon">⚠️</span>Could not fetch arrival data (Firebase bootstrap failed). Stop locations are shown on the map.</div>';
+    renderStops();
+  }
+}
+
+init();
+
+// ─────────────────────────────────────────────────────────────
+// Mobile bottom sheet toggle
+// ─────────────────────────────────────────────────────────────
+(function() {
+  const sidebar = document.getElementById('sidebar');
+  const header = document.getElementById('sidebar-header');
+  const isMobile = () => window.matchMedia('(max-width: 700px)').matches;
+
+  header.addEventListener('click', (e) => {
+    if (!isMobile()) return;
+    e.stopPropagation();
+    sidebar.classList.toggle('collapsed');
+    // Invalidate map size after transition
+    setTimeout(() => map.invalidateSize(), 350);
+  });
+
+  // Start collapsed on mobile
+  if (isMobile()) {
+    sidebar.classList.add('collapsed');
+  }
+
+  window.addEventListener('resize', () => {
+    if (!isMobile()) {
+      sidebar.classList.remove('collapsed');
+    }
+  });
+})();
+</script>
+</body>
+</html>

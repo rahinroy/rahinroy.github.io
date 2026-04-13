@@ -13,8 +13,8 @@ export default async function handler(request) {
   }
 
   const url = new URL(request.url);
-  const path = url.pathname.replace(/^\/api/, '');
-  const target = 'https://realtime.transperth.info' + path + url.search;
+  const proxyPath = url.searchParams.get('p') || '/';
+  const target = 'https://realtime.transperth.info' + proxyPath;
   const bodyText = await request.text();
 
   const response = await fetch(target, {

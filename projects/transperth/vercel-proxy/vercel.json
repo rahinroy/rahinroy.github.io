@@ -1,5 +1,1 @@
-{
-  "rewrites": [
-    { "source": "/SJP/:path*", "destination": "/api/SJP/:path*" }
-  ]
-}
+{}

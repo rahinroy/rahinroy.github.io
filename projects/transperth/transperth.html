@@ -856,6 +856,25 @@ async function getTrip(tripUid, tripDate) {
   return resp.json();
 }
 
+async function getTripUpdate(tripUid, tripDate) {
+  const path = '/SJP/Trip';
+  const resp = await fetch(`${REALTIME_BASE}/api/proxy?p=${encodeURIComponent(path)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: buildAuthHeaderClean(state.realtimeKey),
+    },
+    body: JSON.stringify({
+      TripUid: String(tripUid),
+      TripDate: tripDate,
+      IsRealTimeChecked: true,
+      UpdateOnly: true,
+    }),
+  });
+  if (!resp.ok) throw new Error(`${path} ${resp.status}`);
+  return resp.json();
+}
+
 // ─────────────────────────────────────────────────────────────
 // Google encoded polyline decoder
 // ─────────────────────────────────────────────────────────────
@@ -899,6 +918,7 @@ async function showRouteOnMap(tripUid, tripDate) {
   if (state.activeRoute && state.activeRoute.tripUid === tripUid) {
     clearRouteOverlay();
     renderStops();
+    updateMapMarkers();
     return;
   }
 
@@ -991,7 +1011,9 @@ async function showRouteOnMap(tripUid, tripDate) {
     markers.push(marker);
   }
 
-  state.activeRoute = { polyline: polylineLayer, stopMarkers: markers, tripUid };
+  const routeCode = summary.RouteCode || '';
+
+  state.activeRoute = { polyline: polylineLayer, stopMarkers: markers, tripUid, routeCode };
 
   // Fit map to route
   if (polylineLayer) {
@@ -1002,6 +1024,66 @@ async function showRouteOnMap(tripUid, tripDate) {
   }
 
   renderStops();
+  updateMapMarkers();
+  startRouteTracking();
+}
+
+// ─────────────────────────────────────────────────────────────
+// Live route tracking — poll bus positions every 8s
+// ─────────────────────────────────────────────────────────────
+function startRouteTracking() {
+  const route = state.activeRoute;
+  if (!route || !state.realtimeKey) return;
+
+  // Collect all trips on this route from current arrivals
+  const seen = new Set();
+  const tripsToTrack = [];
+  Object.values(state.arrivals).forEach(({ data }) => {
+    if (!data?.Trips) return;
+    data.Trips.forEach(trip => {
+      const sm = trip.Summary || {};
+      if (sm.RouteCode !== route.routeCode || !sm.TripUid) return;
+      if (seen.has(sm.TripUid)) return;
+      seen.add(sm.TripUid);
+      const tripDate = sm.TripStartTime || trip.DepartureTime || trip.ArriveTime || '';
+      tripsToTrack.push({ tripUid: sm.TripUid, tripDate });
+    });
+  });
+
+  console.log(`[route-track] tracking ${tripsToTrack.length} trips on route ${route.routeCode}`);
+  for (const t of tripsToTrack) {
+    pollTripPosition(t.tripUid, t.tripDate, route);
+  }
+}
+
+async function pollTripPosition(tripUid, tripDate, routeRef) {
+  // Wait 3 seconds before first poll (we just loaded fresh data)
+  await new Promise(r => setTimeout(r, 3000));
+
+  // Stop if route was cleared or changed
+  if (state.activeRoute !== routeRef) return;
+
+  try {
+    const data = await getTripUpdate(tripUid, tripDate);
+    if (state.activeRoute !== routeRef) return;
+
+    const rt = data.Summary?.RealTimeInfo;
+    if (rt?.CurrentPosition) {
+      const parts = rt.CurrentPosition.trim().split(/\s+/);
+      const blat = parseFloat(parts[0]);
+      const blon = parseFloat(parts[1]);
+      if (!isNaN(blat) && !isNaN(blon) && state.busMarkers[tripUid]) {
+        state.busMarkers[tripUid].setLatLng([blat, blon]);
+      }
+    }
+  } catch (err) {
+    console.error('[route-poll]', tripUid, err);
+  }
+
+  // Schedule next poll
+  if (state.activeRoute === routeRef) {
+    pollTripPosition(tripUid, tripDate, routeRef);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1276,16 +1358,36 @@ function updateMapMarkers() {
       if (isNaN(blat) || isNaN(blon)) return;
       const key = sm.TripUid || posStr;
       liveBusUids.add(key);
+      const tripDate = trip.DepartureTime || trip.ArriveTime || sm.TripStartTime || perthNowStr();
       if (state.busMarkers[key]) {
         state.busMarkers[key].setLatLng([blat, blon]);
+        state.busMarkers[key]._tripDate = tripDate;
+        state.busMarkers[key]._routeCode = sm.RouteCode || '';
       } else {
         const icon = busIcon(sm.RouteCode, sm.RouteName, sm.Mode);
         const marker = L.marker([blat, blon], { icon, zIndexOffset: 500 })
           .bindTooltip(`Route ${sm.RouteCode} → ${sm.Headsign}`, { direction: 'top' })
           .addTo(map);
+        marker._tripUid = key;
+        marker._tripDate = tripDate;
+        marker._routeCode = sm.RouteCode || '';
+        marker.on('click', () => {
+          showRouteOnMap(marker._tripUid, marker._tripDate);
+        });
         state.busMarkers[key] = marker;
       }
     });
+  });
+
+  // Hide/show bus markers based on active route
+  const activeRouteCode = state.activeRoute?.routeCode || null;
+  Object.entries(state.busMarkers).forEach(([key, marker]) => {
+    if (activeRouteCode && marker._routeCode !== activeRouteCode) {
+      marker.setOpacity(0);
+      if (marker.getTooltip()) marker.closeTooltip();
+    } else {
+      marker.setOpacity(1);
+    }
   });
 
   // Remove stale bus markers
@@ -1477,6 +1579,9 @@ let _panTimer = null;
 let _lastLoadCenter = null;
 
 async function loadStopsAtCenter() {
+  // Don't refresh stops while viewing a route — buses are being tracked independently
+  if (state.activeRoute) return;
+
   const center = map.getCenter();
   const lat = center.lat;
   const lon = center.lng;
@@ -1489,7 +1594,6 @@ async function loadStopsAtCenter() {
 
   _lastLoadCenter = { lat, lon };
   setDistLabel('Loading stops…');
-  clearRouteOverlay();
 
   try {
     const stops = await findNearbyStops(lat, lon);

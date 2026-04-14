@@ -110,6 +110,73 @@
     background: var(--bg);
   }
 
+  #route-search {
+    display: flex;
+    gap: 6px;
+    padding: 0 12px 8px;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  #route-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+  }
+
+  #route-input:focus {
+    border-color: var(--accent);
+  }
+
+  #route-search-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #route-search-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  #route-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 12px;
+    right: 54px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px;
+    z-index: 20;
+  }
+
+  #route-dropdown.visible { display: block; }
+
+  .route-option {
+    padding: 8px 10px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  .route-option:hover, .route-option.highlighted {
+    background: var(--accent);
+    color: #fff;
+  }
+
   #stops-list {
     flex: 1;
     overflow-y: auto;
@@ -159,6 +226,32 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .direction-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .direction-header.filterable {
+    cursor: pointer;
+  }
+
+  .direction-header.filterable:hover {
+    color: var(--accent);
+  }
+
+  .direction-arrow {
+    color: var(--accent);
+    font-size: 14px;
+  }
+
+  .direction-count {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-muted);
   }
 
   .stop-meta {
@@ -518,6 +611,11 @@
 <div id="main">
   <div id="sidebar">
     <div id="sidebar-header">Nearby Stops</div>
+    <div id="route-search">
+      <input type="text" id="route-input" placeholder="Search route (e.g. 42)" autocomplete="off" inputmode="text">
+      <button id="route-search-btn" title="Search route">Go</button>
+      <div id="route-dropdown"></div>
+    </div>
     <div id="error-banner"></div>
     <div id="stops-list">
       <div class="state-msg">
@@ -562,6 +660,16 @@ function isInPerth(lat, lon) {
   return lat >= PERTH_BOUNDS.minLat && lat <= PERTH_BOUNDS.maxLat &&
          lon >= PERTH_BOUNDS.minLon && lon <= PERTH_BOUNDS.maxLon;
 }
+
+// Route number → a known stop code serving both directions where possible (from GTFS feed)
+const ROUTE_STOPS = {"100":"23845","101":"11698","102":"22665","103":"28524","107":"19650","111":"22973","114":"12212","115":"12212","148":"11962","15":"12669","158":"11057","160":"22973","176":"12206","177":"12205","178":"12205","179":"12205","19":"25948","20":"27254","200":"20130","201":"20454","202":"10047","203":"29558","204":"20555","205":"22024","206":"26628","207":"20454","208":"26628","209":"20709","210":"20454","212":"22739","213":"22742","214":"20787","215":"26313","216":"20504","219":"13369","220":"29642","222":"27683","224":"13562","225":"29539","228":"27442","229":"27814","23":"12218","231":"22734","232":"20902","233":"28104","24":"28526","240":"13073","241":"25101","243":"23865","244":"22037","245":"13048","246":"29642","249":"26772","25":"28526","250":"29254","251":"29696","254":"29285","255":"29280","256":"29696","259":"29632","262":"29632","27":"28001","270":"12199","271":"26172","273":"13963","274":"13963","275":"28547","276":"28547","277":"15544","278":"15544","279":"19153","28":"11496","280":"22009","281":"26172","282":"13734","283":"13734","284":"14410","285":"14206","290":"25751","291":"15544","292":"28539","293":"28538","294":"28847","30":"11698","300":"14533","301":"29742","307":"13963","308":"14668","31":"12069","310":"14745","312":"14668","313":"15544","314":"14668","315":"14668","32":"28473","320":"15206","321":"15056","322":"14598","323":"14668","324":"14668","325":"14668","326":"14533","327":"14668","328":"15240","33":"27928","331":"15240","34":"11703","340":"29290","341":"23816","342":"23816","343":"23816","345":"23816","346":"23816","347":"23816","348":"23816","349":"23816","35":"12223","350":"15624","351":"16189","352":"16189","353":"29269","354":"15632","355":"26307","356":"15627","357":"28810","358":"28631","359":"28631","36":"27377","360":"27172","361":"16118","362":"12545","363":"27897","37":"27377","371":"25948","374":"18478","375":"12503","377":"12503","38":"26953","384":"12538","386":"12453","386X":"12459","388":"27172","389":"18307","39":"12200","390":"28463","391":"26862","40":"12226","402":"16848","403":"16848","404":"16885","406":"27254","407":"27291","41":"12226","410":"11541","412":"11541","413":"11541","414":"26344","415":"12541","416":"12541","42":"12226","421":"11542","422":"11543","423":"19034","424":"18979","425":"11543","427":"29719","428":"29720","43":"12226","441":"18473","442":"18473","443":"18480","444":"18480","445":"18479","446":"18479","447":"18479","448":"12459","449":"16009","45":"28996","450":"29317","451":"12442","452":"18478","455":"18478","46":"28995","460":"18474","461":"18474","462":"17921","463":"18475","464":"18476","465":"22672","466":"18492","467":"18477","468":"18571","47":"17722","470":"18112","471":"27555","473":"17910","474":"17910","479":"23674","480":"18243","481":"18147","482":"21924","483":"17896","484":"26505","485":"27830","486":"28100","487":"26897","488":"28100","491":"27578","492":"27578","494":"22921","495":"28987","496":"26865","498":"27580","500":"11058","502":"10428","503":"10860","504":"10860","505":"19945","51":"11679","510":"11962","511":"10453","512":"26869","513":"11163","514":"20923","515":"20001","516":"10498","517":"26313","518":"25842","519":"28104","520":"21014","523":"28788","525":"27567","526":"27567","527":"27568","529":"12991","530":"21061","531":"21061","532":"10566","535":"27565","536":"27565","537":"27566","540":"17046","541":"23802","542":"17169","543":"23801","544":"22986","548":"10453","549":"10453","550":"17225","551":"21264","552":"21264","553":"21264","554":"23787","555":"23893","556":"21298","557":"26476","558":"26476","559":"26711","560":"17267","561":"24972","563":"23794","564":"29221","565":"21398","566":"26535","567":"21398","568":"21398","569":"28437","574":"24972","577":"28792","584":"25597","585":"25597","586":"28597","588":"24262","589":"24262","591":"21659","592":"21664","593":"26593","594":"17006","597":"21703","598":"21511","600":"26473","604":"26451","605":"26473","619":"10113","621":"27257","645":"73838","650":"11561","652":"12546","653":"11361","654":"14495","655":"14207","656":"10057","657":"27936","658":"25562","659":"10429","67":"12542","68":"12542","72":"12204","73":"12204","800":"70000","802":"73351","803":"73351","804":"73351","805":"72597","806":"72597","807":"72597","808":"72597","81":"17689","810":"74587","811":"74587","812":"74587","815":"70485","816":"70485","817":"70485","82":"19463","825":"72036","826":"72031","827":"72031","828":"72030","829":"72030","83":"19340","830":"72049","832":"71915","84":"19306","840":"72032","841":"72032","842":"72042","843":"72063","844":"72032","85":"12783","850":"70213","851":"70213","852":"70213","853":"72587","854":"70133","855":"70213","856":"70000","861":"71468","862":"71434","863":"71468","864":"71472","865":"71431","866":"71431","870":"73528","871":"73657","872":"73657","880":"73843","881":"73843","890":"74805","901":"29749","902":"28547","903":"28949","904":"22551","907":"29280","908":"29542","909":"17379","910":"10428","915":"10428","925":"29603","930":"12202","930X":"12202","935":"17384","940":"12198","944":"18480","949":"27172","95":"17520","950":"12227","950X":"12902","96":"25948","960":"26333","97":"17520","970":"28257","970X":"27172","975":"28995","980":"28068","990":"27172","995":"12218","998":"10559","999":"10453"};
+const ROUTE_NAMES = Object.keys(ROUTE_STOPS).sort((a, b) => {
+  const na = parseInt(a), nb = parseInt(b);
+  if (!isNaN(na) && !isNaN(nb)) return na - nb;
+  if (!isNaN(na)) return -1;
+  if (!isNaN(nb)) return 1;
+  return a.localeCompare(b);
+});
 
 const RC_CACHE_KEY = 'tp_rc_cache';
 const RC_CACHE_TTL = 7 * 24 * 3600 * 1000; // 7 days
@@ -871,7 +979,7 @@ async function getTripUpdate(tripUid, tripDate) {
       UpdateOnly: true,
     }),
   });
-  if (!resp.ok) throw new Error(`${path} ${resp.status}`);
+  if (!resp.ok) return null; // transient failures (404/5xx) — caller will retry
   return resp.json();
 }
 
@@ -1057,8 +1165,8 @@ function startRouteTracking() {
 }
 
 async function pollTripPosition(tripUid, tripDate, routeRef) {
-  // Wait 3 seconds before first poll (we just loaded fresh data)
-  await new Promise(r => setTimeout(r, 3000));
+  // Wait 8 seconds before first poll (we just loaded fresh data)
+  await new Promise(r => setTimeout(r, 8000));
 
   // Stop if route was cleared or changed
   if (state.activeRoute !== routeRef) return;
@@ -1067,13 +1175,15 @@ async function pollTripPosition(tripUid, tripDate, routeRef) {
     const data = await getTripUpdate(tripUid, tripDate);
     if (state.activeRoute !== routeRef) return;
 
-    const rt = data.Summary?.RealTimeInfo;
-    if (rt?.CurrentPosition) {
-      const parts = rt.CurrentPosition.trim().split(/\s+/);
-      const blat = parseFloat(parts[0]);
-      const blon = parseFloat(parts[1]);
-      if (!isNaN(blat) && !isNaN(blon) && state.busMarkers[tripUid]) {
-        state.busMarkers[tripUid].setLatLng([blat, blon]);
+    if (data) {
+      const rt = data.Summary?.RealTimeInfo;
+      if (rt?.CurrentPosition) {
+        const parts = rt.CurrentPosition.trim().split(/\s+/);
+        const blat = parseFloat(parts[0]);
+        const blon = parseFloat(parts[1]);
+        if (!isNaN(blat) && !isNaN(blon) && state.busMarkers[tripUid]) {
+          state.busMarkers[tripUid].setLatLng([blat, blon]);
+        }
       }
     }
   } catch (err) {
@@ -1085,6 +1195,203 @@ async function pollTripPosition(tripUid, tripDate, routeRef) {
     pollTripPosition(tripUid, tripDate, routeRef);
   }
 }
+
+// ─────────────────────────────────────────────────────────────
+// Route search — find all buses on a given route number
+// ─────────────────────────────────────────────────────────────
+async function searchRoute(routeCode) {
+  const stopId = ROUTE_STOPS[routeCode];
+  if (!stopId) {
+    showError(`Route "${routeCode}" not found`);
+    return;
+  }
+
+  if (!state.realtimeKey) {
+    showError('Realtime key not loaded yet');
+    return;
+  }
+
+  const list = document.getElementById('stops-list');
+  list.innerHTML = '<div class="state-msg"><div class="spinner"></div>Searching route ' + escHtml(routeCode) + '…</div>';
+  clearRouteOverlay();
+  state.routeSearchActive = true;
+
+  try {
+    const data = await getArrivals(stopId, state.realtimeKey);
+    const matchingTrips = (data.Trips || []).filter(t => {
+      const rc = (t.Summary || {}).RouteCode || '';
+      return rc === routeCode;
+    });
+
+    if (matchingTrips.length === 0) {
+      list.innerHTML = `<div class="state-msg">
+        <span class="icon">🔍</span>
+        No active buses on route ${escHtml(routeCode)} right now.
+      </div>`;
+      return;
+    }
+
+    // Group trips by headsign (direction)
+    const directions = {};
+    for (const trip of matchingTrips) {
+      const hs = (trip.Summary || {}).Headsign || 'Unknown';
+      if (!directions[hs]) directions[hs] = [];
+      directions[hs].push(trip);
+    }
+    const headsigns = Object.keys(directions);
+
+    // Store ONLY matching trips so bus markers only show this route
+    state.arrivals = {};
+    state.arrivals[stopId] = {
+      data: { ...data, Trips: matchingTrips },
+      loadedAt: Date.now(),
+    };
+
+    // Show the route arrivals grouped by direction
+    let html = '';
+    for (const hs of headsigns) {
+      const trips = directions[hs];
+      const isOnly = headsigns.length === 1;
+      html += `<div class="stop-card direction-group" data-direction="${escHtml(hs)}">
+        <div class="stop-name direction-header${isOnly ? '' : ' filterable'}" data-direction="${escHtml(hs)}">
+          <span class="direction-arrow">\u2192</span> ${escHtml(hs)}
+          <span class="direction-count">${trips.length} bus${trips.length > 1 ? 'es' : ''}</span>
+        </div>`;
+      for (const trip of trips) {
+        html += renderArrivalRow(trip);
+      }
+      html += '</div>';
+    }
+    list.innerHTML = html;
+
+    // Add click handlers to arrival rows
+    list.querySelectorAll('.arrival-row[data-trip-uid]').forEach(row => {
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const uid = row.dataset.tripUid;
+        const date = row.dataset.tripDate;
+        if (uid) showRouteOnMap(uid, date);
+      });
+    });
+
+    // Direction header click — filter to one direction
+    if (headsigns.length > 1) {
+      list.querySelectorAll('.direction-header.filterable').forEach(hdr => {
+        hdr.addEventListener('click', () => {
+          const dir = hdr.dataset.direction;
+          const cards = list.querySelectorAll('.direction-group');
+          const allVisible = [...cards].every(c => c.style.display !== 'none');
+          cards.forEach(card => {
+            const cardDir = card.dataset.direction;
+            if (allVisible) {
+              card.style.display = cardDir === dir ? '' : 'none';
+            } else {
+              card.style.display = '';
+            }
+          });
+        });
+      });
+    }
+
+    // Update map with matching bus markers only
+    updateMapMarkers();
+
+  } catch (err) {
+    console.error('[route-search]', err);
+    showError(`Route search failed: ${err.message}`);
+    list.innerHTML = `<div class="state-msg">
+      <span class="icon">⚠️</span>
+      Could not search route ${escHtml(routeCode)}.<br>
+      <small>${err.message}</small>
+    </div>`;
+  }
+}
+
+// Wire up search UI with autocomplete
+(function() {
+  const input = document.getElementById('route-input');
+  const btn = document.getElementById('route-search-btn');
+  const dropdown = document.getElementById('route-dropdown');
+  let highlightIdx = -1;
+
+  function doSearch(val) {
+    val = (val || input.value).trim().toUpperCase();
+    if (!val) return;
+    input.value = val;
+    hideDropdown();
+    btn.disabled = true;
+    searchRoute(val).finally(() => { btn.disabled = false; });
+  }
+
+  function hideDropdown() {
+    dropdown.classList.remove('visible');
+    dropdown.innerHTML = '';
+    highlightIdx = -1;
+  }
+
+  function showDropdown(matches) {
+    if (matches.length === 0) { hideDropdown(); return; }
+    highlightIdx = -1;
+    dropdown.innerHTML = matches.map(m =>
+      `<div class="route-option" data-route="${m}">Route ${m}</div>`
+    ).join('');
+    dropdown.classList.add('visible');
+
+    dropdown.querySelectorAll('.route-option').forEach(opt => {
+      opt.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        doSearch(opt.dataset.route);
+      });
+    });
+  }
+
+  function updateHighlight() {
+    const opts = dropdown.querySelectorAll('.route-option');
+    opts.forEach((o, i) => o.classList.toggle('highlighted', i === highlightIdx));
+    if (highlightIdx >= 0 && opts[highlightIdx]) {
+      opts[highlightIdx].scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  input.addEventListener('input', () => {
+    const val = input.value.trim().toUpperCase();
+    if (!val) {
+      hideDropdown();
+      // Clear route search mode — resume normal nearby-stops behavior
+      if (state.routeSearchActive) {
+        state.routeSearchActive = false;
+        clearRouteOverlay();
+        loadStopsAtCenter();
+      }
+      return;
+    }
+    const matches = ROUTE_NAMES.filter(r => r.startsWith(val)).slice(0, 15);
+    showDropdown(matches);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const opts = dropdown.querySelectorAll('.route-option');
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (opts.length) { highlightIdx = Math.min(highlightIdx + 1, opts.length - 1); updateHighlight(); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (opts.length) { highlightIdx = Math.max(highlightIdx - 1, 0); updateHighlight(); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (highlightIdx >= 0 && opts[highlightIdx]) {
+        doSearch(opts[highlightIdx].dataset.route);
+      } else {
+        doSearch();
+      }
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    }
+  });
+
+  input.addEventListener('blur', () => { setTimeout(hideDropdown, 150); });
+  btn.addEventListener('click', () => doSearch());
+})();
 
 // ─────────────────────────────────────────────────────────────
 // Utility: haversine distance in metres
@@ -1120,6 +1427,7 @@ const state = {
   stopMarkers: {},     // uid → leaflet marker
   userMarker: null,
   activeRoute: null,   // { polyline, stopMarkers, tripUid }
+  routeSearchActive: false, // true while viewing route search results
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -1187,6 +1495,7 @@ function modeClass(mode) {
 }
 
 function renderStops() {
+  if (state.routeSearchActive) return; // don't overwrite route search results
   const list = document.getElementById('stops-list');
   if (state.stops.length === 0) {
     list.innerHTML = '<div class="state-msg"><span class="icon">🚏</span>No stops found nearby.</div>';
@@ -1318,17 +1627,19 @@ function updateMapMarkers() {
     }
   }
 
-  // Stop markers
+  // Stop markers — hide when a route is active (route overlay has its own stop dots)
   const existingUids = new Set(Object.keys(state.stopMarkers));
   state.stops.forEach(stop => {
     const isActive = stop.uid === state.activeStopUid;
     if (state.stopMarkers[stop.uid]) {
       state.stopMarkers[stop.uid].setIcon(stopIcon(isActive));
+      state.stopMarkers[stop.uid].setOpacity(state.activeRoute ? 0 : 1);
     } else {
       const marker = L.marker([stop.lat, stop.lon], { icon: stopIcon(isActive) })
         .bindTooltip(stop.name, { className: 'stop-marker-label', direction: 'top', permanent: false })
         .addTo(map);
       marker.on('click', () => selectStop(stop.uid));
+      if (state.activeRoute) marker.setOpacity(0);
       state.stopMarkers[stop.uid] = marker;
     }
     existingUids.delete(stop.uid);
@@ -1431,8 +1742,10 @@ function selectStop(uid) {
 // ─────────────────────────────────────────────────────────────
 async function refreshAllArrivals() {
   if (!state.realtimeKey) return;
+  if (state.routeSearchActive) return; // don't overwrite route search results
 
   for (const stop of state.stops) {
+    if (state.routeSearchActive) return; // abort if search started mid-refresh
     try {
       const data = await getArrivals(stop.uid, state.realtimeKey);
       state.arrivals[stop.uid] = { data, loadedAt: Date.now() };
@@ -1452,6 +1765,7 @@ async function refreshAllArrivals() {
     }
   }
 
+  if (state.routeSearchActive) return; // don't overwrite search results
   renderStops();
   updateMapMarkers();
   startRefreshCountdown();
@@ -1580,7 +1894,7 @@ let _lastLoadCenter = null;
 
 async function loadStopsAtCenter() {
   // Don't refresh stops while viewing a route — buses are being tracked independently
-  if (state.activeRoute) return;
+  if (state.activeRoute || state.routeSearchActive) return;
 
   const center = map.getCenter();
   const lat = center.lat;

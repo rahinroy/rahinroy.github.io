@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transperth Live</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js" crossorigin=""></script>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-left">
+    <button id="back-btn" title="Back to nearby stops">&larr;</button>
+    <h1 id="app-title" style="cursor:pointer">Transperth Live</h1>
+  </div>
+  <div id="location-badge">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+    <span id="dist-label">Locating&hellip;</span>
+  </div>
+</div>
+
+<div id="main">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <span id="sidebar-header-text">Nearby Stops</span>
+    </div>
+    <div id="route-search">
+      <input type="text" id="route-input" placeholder="Search route (e.g. 42)" autocomplete="off" inputmode="text">
+      <button id="route-search-btn" title="Search route">Go</button>
+      <div id="route-dropdown"></div>
+    </div>
+    <div id="error-banner"></div>
+    <div id="sidebar-content">
+      <div class="state-msg">
+        <div class="spinner"></div>
+        Getting your location&hellip;
+      </div>
+    </div>
+    <div id="refresh-indicator">
+      <div id="refresh-bar"><div id="refresh-progress"></div></div>
+      <span id="refresh-label">&ndash;</span>
+    </div>
+  </div>
+  <div id="map"><div id="map-crosshair"></div></div>
+</div>
+
+<script src="js/constants.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/map.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

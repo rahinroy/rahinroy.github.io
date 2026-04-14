@@ -127,6 +127,7 @@
   #map {
     flex: 1;
     background: #1a1a24;
+    position: relative;
   }
 
   /* ── Stop card ── */
@@ -482,6 +483,24 @@
     border: 1px solid var(--border);
     white-space: nowrap;
   }
+
+  /* ── Map crosshair ── */
+  #map-crosshair {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 500;
+    pointer-events: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.6);
+    background: rgba(255,255,255,0.15);
+    transition: opacity 0.2s;
+  }
+
+  #map-crosshair.hidden { opacity: 0; }
 </style>
 </head>
 <body>
@@ -511,7 +530,7 @@
       <span id="refresh-label">–</span>
     </div>
   </div>
-  <div id="map"></div>
+  <div id="map"><div id="map-crosshair"></div></div>
 </div>
 
 <script>
@@ -534,6 +553,15 @@ const PELIAS_SECRET     = 'Lk9XTaKQQVsAeD2NEhFk/suggest';
 
 const REALTIME_BASE     = 'https://rahinroy-github-io.vercel.app';
 const PELIAS_BASE       = 'https://pelias.transperth.info/web_metro/';
+
+// Rough greater Perth bounding box
+const PERTH_BOUNDS = { minLat: -32.6, maxLat: -31.3, minLon: 115.4, maxLon: 116.3 };
+const PERTH_CENTER = { lat: -31.9505, lon: 115.8605 };
+
+function isInPerth(lat, lon) {
+  return lat >= PERTH_BOUNDS.minLat && lat <= PERTH_BOUNDS.maxLat &&
+         lon >= PERTH_BOUNDS.minLon && lon <= PERTH_BOUNDS.maxLon;
+}
 
 const RC_CACHE_KEY = 'tp_rc_cache';
 const RC_CACHE_TTL = 7 * 24 * 3600 * 1000; // 7 days
@@ -901,12 +929,14 @@ async function showRouteOnMap(tripUid, tripDate) {
     if (/^[A-Za-z0-9_~@?\\{}|`^[\]]+$/.test(polylineStr) && !polylineStr.includes(',')) {
       // Google encoded polyline
       coords = decodeGooglePolyline(polylineStr);
-    } else if (polylineStr.includes(',')) {
-      // Semicolon or space-separated "lat,lon" pairs
-      const pairs = polylineStr.split(/[;\s]+/);
+    } else if (polylineStr.includes(';')) {
+      // Semicolon-separated "lat, lon" pairs (e.g. "-32.012, 115.943;-32.011, 115.942")
+      const pairs = polylineStr.split(';');
       for (const pair of pairs) {
-        const [a, b] = pair.split(',').map(Number);
-        if (!isNaN(a) && !isNaN(b)) coords.push([a, b]);
+        const parts = pair.split(',').map(s => parseFloat(s.trim()));
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          coords.push([parts[0], parts[1]]);
+        }
       }
     }
   }
@@ -1198,7 +1228,9 @@ function updateMapMarkers() {
   // User marker
   if (state.userLat !== null) {
     if (!state.userMarker) {
-      state.userMarker = L.marker([state.userLat, state.userLon], { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+      state.userMarker = L.marker([state.userLat, state.userLon], { icon: userIcon, zIndexOffset: 1000 })
+        .bindTooltip('You are here', { className: 'stop-marker-label', direction: 'top', permanent: false })
+        .addTo(map);
     } else {
       state.userMarker.setLatLng([state.userLat, state.userLon]);
     }
@@ -1340,6 +1372,7 @@ async function init() {
 
   // 1. Get user location
   let lat, lon;
+  let hasRealLocation = false;
   try {
     ({ lat, lon } = await new Promise((resolve, reject) => {
       if (!navigator.geolocation) return reject(new Error('Geolocation not supported'));
@@ -1349,20 +1382,27 @@ async function init() {
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
       );
     }));
+    hasRealLocation = true;
   } catch (err) {
-    list.innerHTML = `<div class="state-msg">
-      <span class="icon">📍</span>
-      Location access denied or unavailable.<br>
-      <small>${err.message || ''}</small>
-    </div>`;
-    return;
+    // Fall back to Perth city center
+    lat = PERTH_CENTER.lat;
+    lon = PERTH_CENTER.lon;
+    setDistLabel('Perth CBD (location unavailable)');
   }
 
-  state.userLat = lat;
-  state.userLon = lon;
+  // If location is outside greater Perth, default to city center
+  if (!isInPerth(lat, lon)) {
+    lat = PERTH_CENTER.lat;
+    lon = PERTH_CENTER.lon;
+    hasRealLocation = false;
+    setDistLabel('Perth CBD');
+  }
+
+  state.userLat = hasRealLocation ? lat : null;
+  state.userLon = hasRealLocation ? lon : null;
   map.setView([lat, lon], 15);
   updateMapMarkers();
-  setDistLabel('Loading stops…');
+  if (hasRealLocation) setDistLabel('Loading stops…');
 
   list.innerHTML = '<div class="state-msg"><div class="spinner"></div>Finding nearby stops…</div>';
 
@@ -1398,6 +1438,7 @@ async function init() {
     const bounds = L.latLngBounds([[lat, lon]]);
     state.stops.forEach(s => bounds.extend([s.lat, s.lon]));
     map.fitBounds(bounds.pad(0.15));
+    _lastLoadCenter = { lat, lon };
 
   } catch (err) {
     console.error('[stops]', err);
@@ -1428,6 +1469,57 @@ async function init() {
 }
 
 init();
+
+// ─────────────────────────────────────────────────────────────
+// Refresh stops when map is panned
+// ─────────────────────────────────────────────────────────────
+let _panTimer = null;
+let _lastLoadCenter = null;
+
+async function loadStopsAtCenter() {
+  const center = map.getCenter();
+  const lat = center.lat;
+  const lon = center.lng;
+
+  // Skip if we haven't moved far enough (> 200m from last load)
+  if (_lastLoadCenter) {
+    const moved = haversineM(_lastLoadCenter.lat, _lastLoadCenter.lon, lat, lon);
+    if (moved < 200) return;
+  }
+
+  _lastLoadCenter = { lat, lon };
+  setDistLabel('Loading stops…');
+  clearRouteOverlay();
+
+  try {
+    const stops = await findNearbyStops(lat, lon);
+    stops.sort((a, b) => a.dist - b.dist);
+    state.stops = stops.slice(0, 8);
+
+    if (state.stops.length > 0) {
+      const nearest = state.stops[0];
+      setDistLabel(`${fmtDist(nearest.dist)} from center`);
+      state.activeStopUid = nearest.uid;
+    } else {
+      setDistLabel('No stops nearby');
+    }
+
+    renderStops();
+    updateMapMarkers();
+
+    if (state.realtimeKey && state.stops.length > 0) {
+      state.arrivals = {};
+      await refreshAllArrivals();
+    }
+  } catch (err) {
+    console.error('[pan-refresh]', err);
+  }
+}
+
+map.on('moveend', () => {
+  clearTimeout(_panTimer);
+  _panTimer = setTimeout(loadStopsAtCenter, 800);
+});
 
 // ─────────────────────────────────────────────────────────────
 // Mobile bottom sheet toggle

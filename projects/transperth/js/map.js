@@ -57,7 +57,7 @@ const MapManager = (() => {
     });
   }
 
-  function busIcon(routeCode, routeName, mode) {
+  function busIcon(routeCode, routeName, mode, selected) {
     const mc = modeClass(mode);
     let color;
     if (mc === 'rail') color = '#d4a843';
@@ -65,14 +65,16 @@ const MapManager = (() => {
     else color = '#4a8c5c';
     const label = routeCode ||
       (routeName ? routeName.replace(/\s*Line\s*$/i, '').slice(0, 3).toUpperCase() : '?');
+    const size = selected ? 'font-size:13px; padding:4px 8px;' : 'font-size:10px; padding:2px 5px;';
+    const ring = selected ? `border:2px solid white; box-shadow:0 0 8px ${color};` : '';
     return L.divIcon({
       className: 'bus-label',
       html: `<div style="
-        background:${color}; color:white; font-size:10px; font-weight:800;
-        padding:2px 5px; border-radius:5px; white-space:nowrap;
+        background:${color}; color:white; font-weight:800;
+        ${size} border-radius:5px; white-space:nowrap; ${ring}
       ">${escHtml(label)}</div>`,
       iconSize: null,
-      iconAnchor: [14, 10],
+      iconAnchor: selected ? [18, 13] : [14, 10],
     });
   }
 
@@ -119,23 +121,31 @@ const MapManager = (() => {
   }
 
   // ── Bus markers ──
-  function updateBusMarkers(trips, activeRouteCode) {
+  function updateBusMarkers(trips, activeRouteCode, selectedTripUid) {
     const liveUids = new Set();
 
     trips.forEach(({ tripUid, lat, lon, routeCode, routeName, mode, headsign, tripDate }) => {
       liveUids.add(tripUid);
+      const isSelected = tripUid === selectedTripUid;
       if (_busMarkers[tripUid]) {
         _busMarkers[tripUid].setLatLng([lat, lon]);
         _busMarkers[tripUid]._tripDate = tripDate;
         _busMarkers[tripUid]._routeCode = routeCode || '';
+        // Update icon if selection state changed
+        if (_busMarkers[tripUid]._isSelected !== isSelected) {
+          _busMarkers[tripUid].setIcon(busIcon(routeCode, routeName, mode, isSelected));
+          _busMarkers[tripUid].setZIndexOffset(isSelected ? 900 : 500);
+          _busMarkers[tripUid]._isSelected = isSelected;
+        }
       } else {
-        const icon = busIcon(routeCode, routeName, mode);
-        const marker = L.marker([lat, lon], { icon, zIndexOffset: 500 })
+        const icon = busIcon(routeCode, routeName, mode, isSelected);
+        const marker = L.marker([lat, lon], { icon, zIndexOffset: isSelected ? 900 : 500 })
           .bindTooltip(`Route ${routeCode} \u2192 ${headsign || ''}`, { direction: 'top' })
           .addTo(_map);
         marker._tripUid = tripUid;
         marker._tripDate = tripDate;
         marker._routeCode = routeCode || '';
+        marker._isSelected = isSelected;
         marker.on('click', () => {
           EventBus.emit('bus-clicked', { tripUid: marker._tripUid, tripDate: marker._tripDate });
         });
@@ -143,13 +153,15 @@ const MapManager = (() => {
       }
     });
 
-    // Visibility based on active route
+    // Visibility based on active route — fully hide non-matching buses
     Object.entries(_busMarkers).forEach(([key, marker]) => {
       if (activeRouteCode && marker._routeCode !== activeRouteCode) {
         marker.setOpacity(0);
+        marker.getElement()?.style && (marker.getElement().style.pointerEvents = 'none');
         if (marker.getTooltip()) marker.closeTooltip();
       } else {
         marker.setOpacity(1);
+        marker.getElement()?.style && (marker.getElement().style.pointerEvents = '');
       }
     });
 
@@ -319,6 +331,27 @@ const MapManager = (() => {
 
   function getRouteOverlay() { return _routeOverlay; }
 
+  // Highlight a specific stop on the route overlay by index
+  let _highlightedStopIdx = -1;
+  function highlightRouteStop(stopIdx) {
+    if (!_routeOverlay) return;
+    // Reset previous highlight
+    if (_highlightedStopIdx >= 0 && _routeOverlay.stopMarkers[_highlightedStopIdx]) {
+      const prev = _routeOverlay.stopMarkers[_highlightedStopIdx];
+      prev.setRadius(5);
+      prev.setStyle({ weight: 2 });
+    }
+    // Apply new highlight
+    if (stopIdx >= 0 && _routeOverlay.stopMarkers[stopIdx]) {
+      const m = _routeOverlay.stopMarkers[stopIdx];
+      m.setRadius(9);
+      m.setStyle({ weight: 3 });
+      m.openTooltip();
+      _map.panTo(m.getLatLng(), { animate: true });
+    }
+    _highlightedStopIdx = stopIdx;
+  }
+
   function setView(lat, lon, zoom) { _map.setView([lat, lon], zoom); }
   function panTo(lat, lon) { _map.panTo([lat, lon], { animate: true }); }
   function fitBounds(bounds, pad) { _map.fitBounds(bounds.pad(pad || 0.15)); }
@@ -335,6 +368,7 @@ const MapManager = (() => {
     drawRoute,
     clearRoute,
     getRouteOverlay,
+    highlightRouteStop,
     setView,
     panTo,
     fitBounds,

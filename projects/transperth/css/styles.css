@@ -526,7 +526,14 @@ body {
 }
 
 .bus-card:hover { border-color: var(--cactus); }
-.bus-card.selected { border-color: var(--cactus); box-shadow: 0 0 0 2px rgba(74,140,92,0.15); }
+.bus-card.selected {
+  border-color: var(--cactus);
+  background: rgba(74, 140, 92, 0.06);
+  box-shadow: 0 0 0 2px rgba(74, 140, 92, 0.2);
+}
+.bus-card.selected .route-badge {
+  transform: scale(1.1);
+}
 
 .bus-card-header {
   display: flex;
@@ -640,6 +647,22 @@ body {
   gap: 10px;
   padding: 6px 14px;
   position: relative;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.search-stop:hover {
+  background: var(--surface-alt);
+}
+
+.search-stop.highlighted {
+  background: rgba(74, 140, 92, 0.08);
+}
+
+.search-stop.highlighted .search-stop-dot {
+  border-color: var(--cactus);
+  background: var(--cactus);
+  box-shadow: 0 0 6px rgba(74, 140, 92, 0.5);
 }
 
 .search-stop::before {

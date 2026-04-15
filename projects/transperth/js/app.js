@@ -129,6 +129,9 @@ function extractBusPositions() {
       if (!smRt?.CurrentPosition) return;
       const pos = parsePosition(smRt.CurrentPosition);
       if (!pos) return;
+      // Skip if no ETA data at all
+      const { mins } = getTripEta(trip);
+      if (mins === null) return;
       const key = sm.TripUid || smRt.CurrentPosition;
       if (seen.has(key)) return;
       seen.add(key);
@@ -154,13 +157,15 @@ function getTripEta(trip) {
   const rt = trip.RealTimeInfo || {};
   const smRt = (trip.Summary || {}).RealTimeInfo || null;
   const isLive = !!smRt;
-  const estTime = rt.EstimatedArrivalTime;
+  const estTime = rt.EstimatedArrivalTime || (smRt && smRt.EstimatedArrivalTime);
 
   let mins = null;
   if (estTime) {
     mins = etaMinutes(estTime);
   } else if (trip.ArriveTime) {
     mins = Math.round((new Date(trip.ArriveTime) - perthNow()) / 60_000);
+  } else if (trip.DepartureTime) {
+    mins = Math.round((new Date(trip.DepartureTime) - perthNow()) / 60_000);
   }
 
   let etaClass = '';
@@ -401,7 +406,8 @@ function stopLandingTimers() {
 function updateBusMarkersFromArrivals() {
   const buses = extractBusPositions();
   const overlay = MapManager.getRouteOverlay();
-  MapManager.updateBusMarkers(buses, overlay?.routeCode || null);
+  const selectedUid = AppState.searchTrip?.tripUid || null;
+  MapManager.updateBusMarkers(buses, overlay?.routeCode || null, selectedUid);
 }
 
 // ═══════════════════════════════════════════════════
@@ -510,6 +516,7 @@ async function transitionToSearch(tripUid, tripDate, routeCode) {
         tripStops: tripData.TripStops || [],
       };
       MapManager.drawRoute(tripData, routeCode);
+      updateBusMarkersFromArrivals();
     } catch (err) {
       console.error('[trip]', err);
     }
@@ -581,7 +588,7 @@ function renderSearchView() {
     dirTabsHtml += '</div>';
   }
 
-  // Bus cards for active direction
+  // Bus cards for active direction (skip trips with no ETA)
   let busCardsHtml = '';
   activeTrips.forEach(trip => {
     const sm = trip.Summary || {};
@@ -593,6 +600,7 @@ function renderSearchView() {
     const isSelected = tripUid === selectedTripUid;
 
     const { mins, etaClass, etaDisplay, estTime } = getTripEta(trip);
+    if (mins === null || mins < -2) return;
 
     // Fleet number if available
     const fleetNum = smRt?.VehicleNumber || '';
@@ -744,11 +752,24 @@ function renderSearchView() {
           tripStops: tripData.TripStops || [],
         };
         MapManager.drawRoute(tripData, AppState.searchRouteCode);
+        updateBusMarkersFromArrivals();
         renderSearchView();
       } catch (err) {
         console.error('[trip]', err);
         showError(`Could not load trip: ${err.message}`);
       }
+    });
+  });
+
+  // Wire stop clicks -> highlight on map
+  DOM.sidebarContent.querySelectorAll('.search-stop[data-stop-idx]').forEach(row => {
+    row.addEventListener('click', () => {
+      const idx = parseInt(row.dataset.stopIdx, 10);
+      // Highlight in sidebar
+      DOM.sidebarContent.querySelectorAll('.search-stop').forEach(r => r.classList.remove('highlighted'));
+      row.classList.add('highlighted');
+      // Highlight on map
+      MapManager.highlightRouteStop(idx);
     });
   });
 

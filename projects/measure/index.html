@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AR Distance Measure</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #000; color: #fff; overflow: hidden; height: 100vh; }
+
+  #overlay {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 10;
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+  }
+  #overlay h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+  #overlay p { color: #aaa; margin-bottom: 2rem; text-align: center; padding: 0 2rem; line-height: 1.5; }
+  #startBtn {
+    padding: 1rem 2.5rem; font-size: 1.1rem; border: none; border-radius: 12px;
+    background: #4fc3f7; color: #000; font-weight: 600; cursor: pointer;
+    transition: transform 0.1s;
+  }
+  #startBtn:active { transform: scale(0.95); }
+  #startBtn:disabled { background: #555; color: #999; cursor: not-allowed; }
+  #error { color: #ef5350; margin-top: 1rem; text-align: center; padding: 0 2rem; display: none; }
+
+  #hud {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 5;
+    padding: 1rem; display: none;
+  }
+  #distance-display {
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+    border-radius: 16px; padding: 1rem 1.5rem; text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  #distance-display .label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; }
+  #distance-display .value { font-size: 2.2rem; font-weight: 700; color: #4fc3f7; margin: 0.25rem 0; }
+  #distance-display .sub { font-size: 0.85rem; color: #888; }
+
+  #instructions {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    z-index: 5; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px);
+    border-radius: 30px; padding: 0.75rem 1.5rem; font-size: 0.9rem;
+    color: #ccc; white-space: nowrap; display: none;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  #resetBtn {
+    position: fixed; bottom: 2rem; right: 1.5rem; z-index: 5;
+    width: 50px; height: 50px; border-radius: 50%; border: none;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+    color: #fff; font-size: 1.4rem; cursor: pointer; display: none;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  #crosshair {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    z-index: 4; width: 30px; height: 30px; display: none; pointer-events: none;
+  }
+  #crosshair::before, #crosshair::after {
+    content: ''; position: absolute; background: #fff; border-radius: 1px;
+  }
+  #crosshair::before { width: 2px; height: 100%; left: 50%; transform: translateX(-50%); }
+  #crosshair::after { height: 2px; width: 100%; top: 50%; transform: translateY(-50%); }
+  #crosshair.hit::before, #crosshair.hit::after { background: #4fc3f7; }
+
+  canvas { position: fixed; inset: 0; z-index: 1; }
+</style>
+</head>
+<body>
+
+<div id="overlay">
+  <h1>AR Measure</h1>
+  <p>Measure real-world distances using your camera and augmented reality.</p>
+  <button id="startBtn" disabled>Checking AR support...</button>
+  <div id="error"></div>
+</div>
+
+<div id="hud">
+  <div id="distance-display">
+    <div class="label">Distance</div>
+    <div class="value" id="dist-val">--</div>
+    <div class="sub" id="dist-sub"></div>
+  </div>
+</div>
+
+<div id="instructions">Tap to place first point</div>
+<button id="resetBtn" title="Reset">&#x21bb;</button>
+<div id="crosshair"></div>
+
+<script type="module">
+  // Three.js from CDN
+  const THREE_URL = 'https://unpkg.com/three@0.160.0/build/three.module.js';
+  const { Scene, PerspectiveCamera, WebGLRenderer, RingGeometry, MeshBasicMaterial,
+    Mesh, BufferGeometry, LineBasicMaterial, Line, Float32BufferAttribute,
+    SphereGeometry, Matrix4, Vector3, AdditiveBlending, DoubleSide,
+    AmbientLight, Color } = await import(THREE_URL);
+
+  const overlay = document.getElementById('overlay');
+  const startBtn = document.getElementById('startBtn');
+  const errorDiv = document.getElementById('error');
+  const hud = document.getElementById('hud');
+  const instructions = document.getElementById('instructions');
+  const resetBtn = document.getElementById('resetBtn');
+  const crosshair = document.getElementById('crosshair');
+  const distVal = document.getElementById('dist-val');
+  const distSub = document.getElementById('dist-sub');
+
+  let xrSession = null;
+  let xrRefSpace = null;
+  let hitTestSource = null;
+  let renderer, scene, camera;
+  let points = [];
+  let markers = [];
+  let lineMesh = null;
+  let reticle = null;
+  let hitTestReady = false;
+
+  // Check WebXR support
+  if (!navigator.xr) {
+    showError('WebXR is not supported on this browser. Try Chrome on Android or Safari on iOS 18+.');
+  } else {
+    const supported = await navigator.xr.isSessionSupported('immersive-ar').catch(() => false);
+    if (supported) {
+      startBtn.textContent = 'Start AR';
+      startBtn.disabled = false;
+    } else {
+      showError('Immersive AR is not supported on this device. Use a phone or AR-capable headset with Chrome or Safari.');
+    }
+  }
+
+  startBtn.addEventListener('click', startAR);
+  resetBtn.addEventListener('click', resetMeasurement);
+
+  function showError(msg) {
+    errorDiv.textContent = msg;
+    errorDiv.style.display = 'block';
+    startBtn.textContent = 'Not Available';
+    startBtn.disabled = true;
+  }
+
+  async function startAR() {
+    // Setup Three.js
+    scene = new Scene();
+    camera = new PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+    renderer = new WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.xr.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    scene.add(new AmbientLight(0xffffff, 1));
+
+    // Reticle (surface indicator)
+    const ringGeo = new RingGeometry(0.03, 0.04, 32).rotateX(-Math.PI / 2);
+    const ringMat = new MeshBasicMaterial({ color: 0x4fc3f7, side: DoubleSide });
+    reticle = new Mesh(ringGeo, ringMat);
+    reticle.matrixAutoUpdate = false;
+    reticle.visible = false;
+    scene.add(reticle);
+
+    // Start XR session
+    try {
+      xrSession = await navigator.xr.requestSession('immersive-ar', {
+        requiredFeatures: ['hit-test'],
+        optionalFeatures: ['dom-overlay'],
+        domOverlay: { root: document.body }
+      });
+    } catch (e) {
+      showError('Failed to start AR session: ' + e.message);
+      return;
+    }
+
+    renderer.xr.setReferenceSpaceType('local');
+    await renderer.xr.setSession(xrSession);
+
+    xrRefSpace = renderer.xr.getReferenceSpace();
+
+    // Request hit test source from viewer
+    const viewerSpace = await xrSession.requestReferenceSpace('viewer');
+    hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+    hitTestReady = true;
+
+    // UI
+    overlay.style.display = 'none';
+    hud.style.display = 'block';
+    instructions.style.display = 'block';
+    resetBtn.style.display = 'block';
+    crosshair.style.display = 'block';
+
+    // Handle taps
+    xrSession.addEventListener('select', onSelect);
+    xrSession.addEventListener('end', onSessionEnd);
+
+    renderer.setAnimationLoop(onFrame);
+  }
+
+  const hitMatrix = new Matrix4();
+  const hitPos = new Vector3();
+
+  function onFrame(timestamp, frame) {
+    if (!frame || !hitTestSource) return;
+
+    const hitResults = frame.getHitTestResults(hitTestSource);
+    if (hitResults.length > 0) {
+      const hit = hitResults[0];
+      const pose = hit.getPose(xrRefSpace);
+      if (pose) {
+        reticle.visible = true;
+        reticle.matrix.fromArray(pose.transform.matrix);
+        crosshair.classList.add('hit');
+      }
+    } else {
+      reticle.visible = false;
+      crosshair.classList.remove('hit');
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  function onSelect(event) {
+    if (!reticle.visible || points.length >= 2) return;
+
+    // Get reticle world position
+    const pos = new Vector3();
+    pos.setFromMatrixPosition(reticle.matrix);
+    points.push(pos.clone());
+
+    // Place marker sphere
+    const sphere = new Mesh(
+      new SphereGeometry(0.01, 16, 16),
+      new MeshBasicMaterial({ color: points.length === 1 ? 0x4fc3f7 : 0x81c784 })
+    );
+    sphere.position.copy(pos);
+    scene.add(sphere);
+    markers.push(sphere);
+
+    // Add a subtle glow ring at the point
+    const glow = new Mesh(
+      new RingGeometry(0.005, 0.025, 32).rotateX(-Math.PI / 2),
+      new MeshBasicMaterial({
+        color: points.length === 1 ? 0x4fc3f7 : 0x81c784,
+        transparent: true, opacity: 0.4, side: DoubleSide
+      })
+    );
+    glow.position.copy(pos);
+    scene.add(glow);
+    markers.push(glow);
+
+    if (points.length === 1) {
+      instructions.textContent = 'Tap to place second point';
+    }
+
+    if (points.length === 2) {
+      // Draw line between points
+      const geo = new BufferGeometry();
+      const verts = new Float32Array([
+        points[0].x, points[0].y, points[0].z,
+        points[1].x, points[1].y, points[1].z
+      ]);
+      geo.setAttribute('position', new Float32BufferAttribute(verts, 3));
+      lineMesh = new Line(geo, new LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
+      scene.add(lineMesh);
+
+      // Calculate distance
+      const dist = points[0].distanceTo(points[1]);
+      updateDisplay(dist);
+      instructions.textContent = 'Tap reset to measure again';
+    }
+  }
+
+  function updateDisplay(meters) {
+    if (meters >= 1) {
+      distVal.textContent = meters.toFixed(2) + ' m';
+    } else {
+      distVal.textContent = (meters * 100).toFixed(1) + ' cm';
+    }
+    distSub.textContent = formatImperial(meters);
+  }
+
+  function formatImperial(meters) {
+    const totalInches = meters * 39.3701;
+    const feet = Math.floor(totalInches / 12);
+    const inches = (totalInches % 12).toFixed(1);
+    if (feet > 0) return `${feet} ft ${inches} in`;
+    return `${inches} in`;
+  }
+
+  function resetMeasurement() {
+    points = [];
+    markers.forEach(m => { scene.remove(m); m.geometry?.dispose(); m.material?.dispose(); });
+    markers = [];
+    if (lineMesh) { scene.remove(lineMesh); lineMesh.geometry.dispose(); lineMesh.material.dispose(); lineMesh = null; }
+    distVal.textContent = '--';
+    distSub.textContent = '';
+    instructions.textContent = 'Tap to place first point';
+  }
+
+  function onSessionEnd() {
+    xrSession = null; hitTestSource = null; hitTestReady = false;
+    overlay.style.display = 'flex';
+    hud.style.display = 'none';
+    instructions.style.display = 'none';
+    resetBtn.style.display = 'none';
+    crosshair.style.display = 'none';
+    renderer.domElement.remove();
+  }
+</script>
+</body>
+</html>

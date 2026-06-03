@@ -179,7 +179,7 @@
 
     // Request hit test source from viewer
     const viewerSpace = await xrSession.requestReferenceSpace('viewer');
-    hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace });
+    hitTestSource = await xrSession.requestHitTestSource({ space: viewerSpace, entityTypes: ['plane', 'point'] });
     hitTestReady = true;
 
     // UI

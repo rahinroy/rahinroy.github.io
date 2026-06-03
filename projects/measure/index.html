@@ -115,6 +115,7 @@
   let lineMesh = null;
   let reticle = null;
   let hitTestReady = false;
+  let suppressSelect = false;
 
   // Check WebXR support
   if (!navigator.xr) {
@@ -219,7 +220,7 @@
   }
 
   function onSelect(event) {
-    if (!reticle.visible || points.length >= 2) return;
+    if (!reticle.visible || points.length >= 2 || suppressSelect) return;
 
     // Get reticle world position
     const pos = new Vector3();
@@ -287,6 +288,8 @@
   }
 
   function resetMeasurement() {
+    suppressSelect = true;
+    setTimeout(() => { suppressSelect = false; }, 300);
     points = [];
     markers.forEach(m => { scene.remove(m); m.geometry?.dispose(); m.material?.dispose(); });
     markers = [];

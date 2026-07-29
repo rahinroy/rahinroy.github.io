@@ -1,0 +1,253 @@
+<meta charset="utf-8">
+<title>banana wobble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Lobster&family=Fredoka:wght@600&family=Chewy&family=Bungee&family=Caveat:wght@700&family=Righteous&family=Gochi+Hand&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  /* checkerboard so the transparent background is obvious in the preview */
+  body {
+    background:
+      conic-gradient(#e9e9e9 90deg, #ffffff 90deg 180deg, #e9e9e9 180deg 270deg, #ffffff 270deg)
+      0 0 / 40px 40px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #stage { height: 100vh; width: auto; display: block; }
+
+  /* ---- control panel ---- */
+  #panel {
+    position: fixed; top: 12px; left: 12px;
+    background: rgba(20,20,20,.92); color: #eee;
+    font: 13px/1.4 system-ui, sans-serif;
+    padding: 12px 14px; border-radius: 10px;
+    display: grid; grid-template-columns: auto 1fr; gap: 8px 10px;
+    align-items: center; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    width: 260px;
+  }
+  #panel h3 { grid-column: 1 / -1; margin: 0 0 2px; font-size: 13px; }
+  #panel label { white-space: nowrap; }
+  #panel input, #panel select { width: 100%; }
+  #panel .val { font-variant-numeric: tabular-nums; opacity: .8; }
+  #export, #exportPng {
+    grid-column: 1 / -1; margin-top: 4px; padding: 8px;
+    background: #f5d020; color: #111; border: 0; border-radius: 8px;
+    font: 600 13px system-ui; cursor: pointer;
+  }
+  #export:disabled, #exportPng:disabled { opacity: .6; cursor: default; }
+  #status { grid-column: 1 / -1; min-height: 1em; opacity: .8; }
+  #toggle {
+    position: fixed; top: 12px; left: 12px; z-index: 11;
+    background: rgba(20,20,20,.92); color: #eee; border: 0; border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; font: 13px system-ui; display: none;
+  }
+</style>
+
+<canvas id="stage" width="1080" height="1920"></canvas>
+
+<button id="toggle">☰ controls</button>
+<div id="panel">
+  <h3>controls &nbsp;<a href="#" id="hide" style="color:#8ab4ff;font-weight:normal;font-size:11px">hide</a></h3>
+
+  <label for="font">Font</label>
+  <select id="font">
+    <option value="Pacifico" selected>Pacifico</option>
+    <option value="Lobster">Lobster</option>
+    <option value="Chewy">Chewy</option>
+    <option value="Fredoka">Fredoka</option>
+    <option value="Gochi Hand">Gochi Hand</option>
+    <option value="Caveat">Caveat</option>
+    <option value="Bungee">Bungee</option>
+    <option value="Righteous">Righteous</option>
+  </select>
+
+  <label for="size">Text size</label>
+  <div><input type="range" id="size" min="4" max="18" step="0.5" value="10">
+       <span class="val" id="sizeVal"></span></div>
+
+  <label for="outlineC">Outline color</label>
+  <input type="color" id="outlineC" value="#000000">
+
+  <label for="outlineW">Outline width</label>
+  <div><input type="range" id="outlineW" min="0" max="30" step="1" value="10">
+       <span class="val" id="outlineWVal"></span></div>
+
+  <label for="fill">Text color</label>
+  <input type="color" id="fill" value="#f5d020">
+
+  <label for="lineGap">Line spacing</label>
+  <div><input type="range" id="lineGap" min="0.7" max="2.5" step="0.05" value="1.15">
+       <span class="val" id="lineGapVal"></span></div>
+
+  <label for="speed">Frame speed</label>
+  <div><input type="range" id="speed" min="60" max="1200" step="20" value="400">
+       <span class="val" id="speedVal"></span></div>
+
+  <button id="exportPng">Export 2 frames (transparent PNG)</button>
+  <button id="export">Export 10s video (transparent)</button>
+  <div id="status"></div>
+</div>
+
+<script>
+  const WORDS = "banana miso brown sugar caramel banana toffee date coffee".split(" ");
+  // group into lines of 2 words each (last line may have 1)
+  const LINES = [];
+  for (let i = 0; i < WORDS.length; i += 2) LINES.push(WORDS.slice(i, i + 2));
+
+  const ANGLE = 15 * Math.PI / 180;
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d", { alpha: true });
+  const W = canvas.width, H = canvas.height;
+
+  // config
+  const cfg = { font: "Pacifico", size: 10, outlineC: "#000000",
+                outlineW: 10, fill: "#f5d020", speed: 400, lineGap: 1.15 };
+  let dir = 1;
+
+  const fontString = px => `${px}px "${cfg.font}"`;
+
+  function computeLayout(size) {
+    ctx.font = fontString(size);
+    return LINES.map(words => {
+      const widths = words.map(w => ctx.measureText(w).width);
+      const gap = size * 0.5;
+      const total = widths.reduce((a, b) => a + b, 0) + gap * (words.length - 1);
+      return { words, widths, gap, total };
+    });
+  }
+
+  function drawWord(text, cx, cy, size, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+    ctx.font = fontString(size);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+    if (cfg.outlineW > 0) {
+      ctx.strokeStyle = cfg.outlineC;
+      ctx.lineWidth = cfg.outlineW;
+      ctx.strokeText(text, 0, 0);   // stroke first, fill on top => clean glyph outline
+    }
+    ctx.fillStyle = cfg.fill;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, W, H);   // transparent background
+
+    // auto-fit so 2-per-line never overflows
+    let size = cfg.size / 100 * H;
+    let lines = computeLayout(size);
+    const availW = W * 0.9;
+    const maxTotal = Math.max(...lines.map(l => l.total));
+    if (maxTotal > availW) { size *= availW / maxTotal; lines = computeLayout(size); }
+    const availH = H * 0.94;
+    const needH = LINES.length * size * cfg.lineGap;
+    if (needH > availH) { size *= availH / needH; lines = computeLayout(size); }
+
+    const n = lines.length;
+    const step = size * cfg.lineGap;
+    const startY = (H - step * (n - 1)) / 2;
+    lines.forEach((l, i) => {
+      const cy = startY + i * step;
+      let x = (W - l.total) / 2;
+      l.words.forEach((word, j) => {
+        const w = l.widths[j];
+        drawWord(word, x + w / 2, cy, size, dir * ANGLE);
+        x += w + l.gap;
+      });
+    });
+  }
+
+  // --- 2-frame loop ---
+  let timer = null;
+  function startLoop(ms) {
+    clearInterval(timer);
+    render();
+    timer = setInterval(() => { dir = -dir; render(); }, ms);
+  }
+
+  // --- controls ---
+  const $ = id => document.getElementById(id);
+  function reloadFontThen(cb) {
+    document.fonts.load(`100px "${cfg.font}"`).then(cb).catch(cb);
+  }
+
+  $("font").oninput = e => { cfg.font = e.target.value; reloadFontThen(render); };
+  $("size").oninput = e => { cfg.size = +e.target.value;
+                             $("sizeVal").textContent = cfg.size + "%"; render(); };
+  $("outlineC").oninput = e => { cfg.outlineC = e.target.value; render(); };
+  $("outlineW").oninput = e => { cfg.outlineW = +e.target.value;
+                                 $("outlineWVal").textContent = cfg.outlineW + "px"; render(); };
+  $("fill").oninput = e => { cfg.fill = e.target.value; render(); };
+  $("lineGap").oninput = e => { cfg.lineGap = +e.target.value;
+                               $("lineGapVal").textContent = cfg.lineGap.toFixed(2) + "×"; render(); };
+  $("speed").oninput = e => { cfg.speed = +e.target.value;
+                              $("speedVal").textContent = cfg.speed + "ms"; startLoop(cfg.speed); };
+
+  // panel show/hide
+  $("hide").onclick = e => { e.preventDefault();
+    $("panel").style.display = "none"; $("toggle").style.display = "block"; };
+  $("toggle").onclick = () => {
+    $("panel").style.display = "grid"; $("toggle").style.display = "none"; };
+
+  // --- PNG frame export (lossless transparency) ---
+  function downloadCanvas(name) {
+    const url = canvas.toDataURL("image/png");
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+  }
+  $("exportPng").onclick = async () => {
+    const btn = $("exportPng"), status = $("status");
+    await document.fonts.load(`100px "${cfg.font}"`).catch(() => {});
+    btn.disabled = true;
+    clearInterval(timer);                 // pause the loop so we control the frame
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+
+    dir = 1;  render();  downloadCanvas("banana-frame-1.png");   // +15°
+    await wait(400);                      // small gap so both downloads register
+    dir = -1; render(); downloadCanvas("banana-frame-2.png");    // -15°
+
+    startLoop(cfg.speed);                 // resume animation
+    btn.disabled = false;
+    status.textContent = "Saved 2 transparent PNG frames (+15° / -15°).";
+  };
+
+  // --- video export (transparent WebM via VP9/VP8 alpha) ---
+  $("export").onclick = async () => {
+    const btn = $("export"), status = $("status");
+    const types = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+    const mime = types.find(t => window.MediaRecorder && MediaRecorder.isTypeSupported(t));
+    if (!mime) { status.textContent = "MediaRecorder/WebM not supported in this browser."; return; }
+
+    await document.fonts.load(`100px "${cfg.font}"`).catch(() => {});
+    btn.disabled = true;
+    status.textContent = "Recording 10s…";
+
+    const stream = canvas.captureStream(30);
+    const chunks = [];
+    const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 12_000_000 });
+    rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    rec.onstop = () => {
+      const blob = new Blob(chunks, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "banana.webm"; a.click();
+      URL.revokeObjectURL(url);
+      btn.disabled = false;
+      status.textContent = "Saved banana.webm (transparent WebM).";
+    };
+    rec.start();
+    setTimeout(() => rec.stop(), 10000);
+  };
+
+  // init
+  $("sizeVal").textContent = cfg.size + "%";
+  $("outlineWVal").textContent = cfg.outlineW + "px";
+  $("lineGapVal").textContent = cfg.lineGap.toFixed(2) + "×";
+  $("speedVal").textContent = cfg.speed + "ms";
+  document.fonts.ready.then(() => startLoop(cfg.speed));
+  startLoop(cfg.speed); // draw immediately, refined once fonts are ready
+</script>
